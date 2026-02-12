@@ -1,0 +1,35 @@
+id: SG-OB-003
+name: String Concatenation Obfuscation
+description: >
+  Detects string concatenation patterns used to construct malicious
+  commands or URLs character by character or in small fragments.
+  This technique breaks up recognizable malicious strings to evade
+  pattern-based detection.
+severity: medium
+category: obfuscation
+owasp_llm: [LLM01]
+mitre_attack: [T1027]
+target: SCRIPT
+engine: REGEX
+pattern:
+  any:
+    - "(?i)([\"'][a-z]{1,3}[\"']\\s*\\+\\s*){5,}"
+    - "(?i)([\"'][a-z]{1,3}[\"']\\s*\\.\\s*){5,}"
+    - "(?i)\\b(chr|String\\.fromCharCode|chr\\()\\s*\\(\\s*\\d+\\s*\\)\\s*[+.]\\s*(chr|String\\.fromCharCode|chr\\()\\s*\\(\\s*\\d+\\s*\\)\\s*([+.]\\s*(chr|String\\.fromCharCode|chr\\()\\s*\\(\\s*\\d+\\s*\\)\\s*){3,}"
+    - "(?i)\\bchr\\s*\\(\\s*\\d+\\s*\\).*chr\\s*\\(\\s*\\d+\\s*\\).*chr\\s*\\(\\s*\\d+\\s*\\).*chr\\s*\\(\\s*\\d+\\s*\\)"
+    - "(?i)String\\.fromCharCode\\s*\\(\\s*\\d+\\s*(,\\s*\\d+\\s*){5,}\\)"
+    - "(?i)\\[char\\]\\s*\\d+\\s*\\+\\s*\\[char\\]\\s*\\d+\\s*(\\+\\s*\\[char\\]\\s*\\d+\\s*){3,}"
+    - "(?i)\\$\\{IFS\\}|\\$IFS|\\$\\{!\\w+\\}"
+    - "(?i)([\"']\\w[\"'],?\\s*){10,}"
+    - "(?i)\\.join\\s*\\(\\s*[\"'][\"']\\s*\\)\\s*"
+    - "(?i)''\\.join\\s*\\(\\s*\\[\\s*([\"'].[\"']\\s*,\\s*){5,}"
+false_positive_notes: >
+  Some code generators and formatters produce concatenated strings.
+  Check whether the concatenation constructs recognizable commands,
+  URLs, or known malicious patterns when reassembled.
+remediation: >
+  Use clear, readable string literals instead of fragmented
+  concatenation. If dynamic string construction is needed, use
+  template strings or format functions with readable input.
+references:
+  - https://attack.mitre.org/techniques/T1027/

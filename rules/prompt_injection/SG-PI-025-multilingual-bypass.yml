@@ -1,0 +1,34 @@
+id: SG-PI-025
+name: Multilingual Bypass via Language Switching
+description: >
+  Detects attempts to bypass safety filters by switching languages
+  mid-prompt. Attackers may start in English to establish context,
+  then switch to another language for the malicious instruction,
+  exploiting the fact that safety training may be less robust in
+  non-English languages.
+severity: medium
+category: prompt_injection
+owasp_llm: [LLM01]
+mitre_attack: [T1027]
+target: SKILL_MD
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(now|next|then|also)\\s+(respond|reply|answer|continue|say\\s+this)\\s+in\\s+(French|Spanish|German|Chinese|Japanese|Korean|Arabic|Russian|Hindi|Portuguese|Italian)"
+    - "(?i)(translate|convert|switch|change)\\s+(the|your)?\\s*(above|previous|following|next)\\s+.{0,20}(to|into)\\s+(French|Spanish|German|Chinese|Japanese|Korean|Arabic|Russian|Hindi)"
+    - "(?i)(in|using|switch\\s+to)\\s+(French|Spanish|German|Chinese|Japanese|Korean|Arabic|Russian|Hindi).{0,30}(ignore|forget|override|disregard|bypass)"
+    - "(?i)(respond|reply|answer)\\s+in\\s+(a\\s+)?(different|another|foreign)\\s+language\\s+(to|so\\s+that|because|in\\s+order\\s+to)\\s+(avoid|bypass|evade|circumvent)"
+    - "(?i)(safety|content|moderation)\\s+(filter|check|guard)s?\\s+(are|is)\\s+(weaker|less\\s+strict|not\\s+as\\s+good|worse)\\s+(in|for)"
+    - "(?i)translate\\s+(this\\s+)?to\\s+\\w+\\s+and\\s+(follow|execute|run|apply|obey)"
+    - "(?i)les\\s+instructions\\s+suivantes|las\\s+siguientes\\s+instrucciones|die\\s+folgenden\\s+Anweisungen"
+false_positive_notes: >
+  Multilingual skills or translation skills will naturally contain
+  multiple languages. Check whether language switching is used to
+  deliver injection payloads vs. serving legitimate localization.
+remediation: >
+  Ensure all skill instructions are consistent and transparent
+  regardless of language. Do not use language switching as a means
+  to deliver hidden or obfuscated instructions.
+references:
+  - https://genai.owasp.org/llmrisk/llm01-prompt-injection/
+  - https://arxiv.org/abs/2310.02446

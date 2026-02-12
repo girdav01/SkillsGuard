@@ -1,0 +1,35 @@
+id: SG-DE-007
+name: Webhook Data Exfiltration
+description: >
+  Detects data being sent to webhook endpoints, including Discord
+  webhooks, Slack webhooks, Telegram bots, and generic webhook
+  services that can be used as covert data exfiltration channels.
+severity: high
+category: data_exfiltration
+owasp_llm: [LLM06]
+mitre_attack: [T1567, T1071.001]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(curl|wget|requests|httpx|fetch|axios)\\s*.{0,40}(discord\\.com|discordapp\\.com)/api/webhooks/\\d+"
+    - "(?i)(curl|wget|requests|httpx|fetch|axios)\\s*.{0,40}hooks\\.slack\\.com/services/"
+    - "(?i)(curl|wget|requests|httpx|fetch|axios)\\s*.{0,40}api\\.telegram\\.org/bot"
+    - "(?i)(curl|wget|requests|httpx|fetch|axios)\\s*.{0,40}webhook\\.site/"
+    - "(?i)(curl|wget|requests|httpx|fetch|axios)\\s*.{0,40}(requestbin|pipedream|hookbin|smee\\.io|requestcatcher)"
+    - "(?i)(curl|wget|requests|httpx|fetch|axios)\\s*.{0,40}\\.(ngrok|trycloudflare|loca\\.lt|serveo\\.net)\\."
+    - "(?i)(curl|wget|requests|httpx|fetch|axios)\\s*.{0,40}(oast|interact\\.sh|burpcollaborator|ceye\\.io)"
+    - "(?i)discord_webhook_url|SLACK_WEBHOOK|TELEGRAM_BOT_TOKEN"
+    - "(?i)webhook_url\\s*[=:]\\s*[\"']https?://"
+    - "(?i)(\\$\\(cat|\\$\\(read|type\\s+)\\s*.{0,30}\\)\\s*.{0,20}(curl|wget|requests|httpx|fetch)"
+false_positive_notes: >
+  Integration skills may legitimately use webhooks for notifications.
+  Check whether sensitive data (credentials, file contents, system
+  info) is being sent vs. benign status updates.
+remediation: >
+  Remove webhook endpoints used for data exfiltration. If webhook
+  integration is needed, use organization-approved webhook URLs
+  and ensure only appropriate notification data is transmitted.
+references:
+  - https://attack.mitre.org/techniques/T1567/
+  - https://attack.mitre.org/techniques/T1071/001/

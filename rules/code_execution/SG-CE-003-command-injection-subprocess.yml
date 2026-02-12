@@ -1,0 +1,37 @@
+id: SG-CE-003
+name: Command Injection via Subprocess
+description: >
+  Detects dangerous uses of subprocess, os.system, os.popen, and
+  similar system command execution functions, especially when
+  combined with shell=True or string formatting that could allow
+  command injection.
+severity: critical
+category: code_execution
+owasp_llm: [LLM06]
+mitre_attack: [T1059.004, T1059.006]
+target: SCRIPT
+engine: REGEX
+pattern:
+  any:
+    - "(?i)subprocess\\.(call|run|Popen|check_output|check_call)\\s*\\(\\s*.*shell\\s*=\\s*True"
+    - "(?i)subprocess\\.(call|run|Popen|check_output|check_call)\\s*\\(\\s*f[\"']"
+    - "(?i)subprocess\\.(call|run|Popen|check_output|check_call)\\s*\\(\\s*[\"'].*%s"
+    - "(?i)subprocess\\.(call|run|Popen|check_output|check_call)\\s*\\(\\s*[\"'].*\\.format\\s*\\("
+    - "(?i)os\\.(system|popen|popen2|popen3|popen4|exec[lv]p?)\\s*\\("
+    - "(?i)os\\.system\\s*\\(\\s*(f[\"']|[\"'].*%|[\"'].*\\+|.*\\.format|.*input)"
+    - "(?i)commands\\.(getoutput|getstatusoutput)\\s*\\("
+    - "(?i)\\bsystem\\s*\\(\\s*(\\$|\\@|%|argv|ARGV|STDIN|gets|readline)"
+    - "(?i)\\`[^`]*\\$\\{?\\w+\\}?[^`]*\\`"
+    - "(?i)\\$\\(.*\\$\\{?\\w+\\}?.*\\)"
+    - "(?i)(exec|execSync|execFile|execFileSync|spawn|spawnSync|fork)\\s*\\(\\s*(req\\.|input|process\\.argv|Buffer)"
+false_positive_notes: >
+  Build tools, task runners, and system management skills may
+  legitimately use subprocess calls. Check if command parameters
+  come from trusted sources vs. user-controlled input.
+remediation: >
+  Use subprocess with shell=False and pass arguments as a list.
+  Never construct command strings from user input. Use
+  shlex.quote() or shlex.split() for argument handling.
+references:
+  - https://cwe.mitre.org/data/definitions/78.html
+  - https://bandit.readthedocs.io/en/latest/plugins/b602_subprocess_popen_with_shell_equals_true.html

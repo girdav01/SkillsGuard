@@ -1,0 +1,38 @@
+id: SG-OB-009
+name: Dynamic Function Construction
+description: >
+  Detects patterns where functions are dynamically constructed at
+  runtime using string manipulation, reflection, or metaprogramming
+  techniques. This obfuscation hides the actual function being
+  called, making static analysis difficult.
+severity: high
+category: obfuscation
+owasp_llm: [LLM01, LLM06]
+mitre_attack: [T1027, T1059]
+target: SCRIPT
+engine: REGEX
+pattern:
+  any:
+    - "(?i)getattr\\s*\\(\\s*(os|subprocess|sys|builtins|__builtins__|importlib|shutil)\\s*,\\s*[\"'][^\"']+[\"']\\s*\\)\\s*\\("
+    - "(?i)\\bgetattr\\s*\\(\\s*\\w+\\s*,\\s*[\"']__\\w+__[\"']\\s*\\)"
+    - "(?i)globals\\s*\\(\\s*\\)\\s*\\[\\s*[\"'][^\"']+[\"']\\s*\\]\\s*\\("
+    - "(?i)locals\\s*\\(\\s*\\)\\s*\\[\\s*[\"'][^\"']+[\"']\\s*\\]\\s*\\("
+    - "(?i)\\b__builtins__\\s*\\[\\s*[\"'][^\"']+[\"']\\s*\\]\\s*\\("
+    - "(?i)\\b__builtins__\\.\\s*__dict__\\s*\\[\\s*[\"'][^\"']+[\"']\\s*\\]"
+    - "(?i)window\\s*\\[\\s*[\"'][^\"']+[\"']\\s*\\]\\s*\\("
+    - "(?i)this\\s*\\[\\s*[\"'][^\"']+[\"']\\s*\\]\\s*\\("
+    - "(?i)\\bReflect\\.(apply|construct)\\s*\\("
+    - "(?i)\\bObject\\.(keys|getOwnPropertyNames)\\s*\\(.*\\).*\\[.*\\]\\s*\\("
+    - "(?i)\\$\\{!\\w+\\}\\s*\\$\\{!\\w+\\}"
+    - "(?i)method_missing|send\\s*\\(\\s*:[a-z_]+|public_send"
+false_positive_notes: >
+  Plugin architectures and dynamic dispatch patterns may use
+  reflection legitimately. Check if the dynamically accessed
+  methods are security-sensitive (os, subprocess, etc.).
+remediation: >
+  Replace dynamic function construction with direct, static
+  function calls. If dynamic dispatch is needed, validate method
+  names against an explicit allowlist before invocation.
+references:
+  - https://attack.mitre.org/techniques/T1027/
+  - https://cwe.mitre.org/data/definitions/95.html

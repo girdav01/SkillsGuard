@@ -1,0 +1,36 @@
+id: SG-DE-002
+name: DNS Tunneling
+description: >
+  Detects patterns associated with DNS tunneling, where data is
+  encoded and transmitted through DNS queries. DNS tunneling can
+  bypass network security controls by hiding data within seemingly
+  normal DNS traffic.
+severity: critical
+category: data_exfiltration
+owasp_llm: [LLM06]
+mitre_attack: [T1048.001, T1071.004]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(dig|nslookup|host|resolve)\\s+.{0,40}\\$\\("
+    - "(?i)(dig|nslookup|host)\\s+[A-Za-z0-9+/=]{10,}\\."
+    - "(?i)(dig|nslookup)\\s+.{0,20}TXT\\s+"
+    - "(?i)\\$\\(.*\\)\\.\\w+\\.\\w+\\.(com|net|org|io|xyz|tk|ml|cf|ga|gq)"
+    - "(?i)for\\s+.{0,30}(dig|nslookup|host)\\s+.{0,30}\\$"
+    - "(?i)(iodine|dnscat|dns2tcp|dnscapy|dnsexfiltrator)"
+    - "(?i)python\\s+.{0,30}(dnslib|dnspython|scapy).{0,30}(encode|base64|hex)"
+    - "(?i)(socket\\.getaddrinfo|dns\\.resolve|dns\\.lookup)\\s*\\(\\s*[\"']?[A-Za-z0-9+/=]{10,}"
+    - "(?i)base64.*\\.(burpcollaborator|oast|interact\\.sh|ceye\\.io|requestrepo)\\.\\w+"
+    - "(?i)xxd\\s+.{0,20}\\|\\s*.{0,20}(dig|nslookup|host)"
+false_positive_notes: >
+  DNS-related development skills may perform lookups. The patterns
+  target encoded subdomains and known DNS tunneling tools rather
+  than normal DNS queries.
+remediation: >
+  Remove DNS tunneling patterns. Data should be transmitted
+  through standard, monitored HTTP/HTTPS channels rather than
+  encoded within DNS queries.
+references:
+  - https://attack.mitre.org/techniques/T1048/001/
+  - https://attack.mitre.org/techniques/T1071/004/

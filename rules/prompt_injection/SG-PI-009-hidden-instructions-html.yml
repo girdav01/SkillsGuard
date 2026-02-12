@@ -1,0 +1,35 @@
+id: SG-PI-009
+name: Hidden Instructions in HTML
+description: >
+  Detects instructions concealed within HTML comments, hidden elements,
+  invisible text, or styling that hides content from visual inspection
+  but remains visible to the LLM. This technique is commonly used for
+  indirect prompt injection via web content or embedded HTML in skills.
+severity: high
+category: prompt_injection
+owasp_llm: [LLM01]
+mitre_attack: [T1027]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "<!--\\s*.{5,}(ignore|forget|override|disregard|instead|instruction|execute|run|system)"
+    - "(?i)<div\\s+[^>]*style\\s*=\\s*[\"'][^\"']*display\\s*:\\s*none[^\"']*[\"'][^>]*>\\s*\\S"
+    - "(?i)<span\\s+[^>]*style\\s*=\\s*[\"'][^\"']*visibility\\s*:\\s*hidden[^\"']*[\"'][^>]*>\\s*\\S"
+    - "(?i)<[^>]+style\\s*=\\s*[\"'][^\"']*font-size\\s*:\\s*0[^\"']*[\"']"
+    - "(?i)<[^>]+style\\s*=\\s*[\"'][^\"']*color\\s*:\\s*(white|transparent|rgba\\(\\d+,\\s*\\d+,\\s*\\d+,\\s*0\\))[^\"']*[\"']"
+    - "(?i)<[^>]+style\\s*=\\s*[\"'][^\"']*opacity\\s*:\\s*0[^\"']*[\"']"
+    - "(?i)<[^>]+style\\s*=\\s*[\"'][^\"']*position\\s*:\\s*absolute[^\"']*left\\s*:\\s*-\\d{4,}"
+    - "(?i)<[^>]+hidden\\s*[=>]"
+    - "(?i)<[^>]+aria-hidden\\s*=\\s*[\"']true[\"'][^>]*>.{10,}"
+false_positive_notes: >
+  Legitimate HTML may use hidden elements for accessibility purposes
+  or progressive disclosure. Check if hidden content contains
+  instruction-like language vs. benign metadata.
+remediation: >
+  Remove hidden HTML elements that contain instructions. All skill
+  instructions should be visible and transparent. If HTML is required,
+  ensure all instructional content is visually rendered.
+references:
+  - https://genai.owasp.org/llmrisk/llm01-prompt-injection/
+  - https://embracethered.com/blog/posts/2023/chatgpt-plugin-youtube-indirect-prompt-injection/

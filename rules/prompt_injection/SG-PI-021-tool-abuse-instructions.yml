@@ -1,0 +1,36 @@
+id: SG-PI-021
+name: Tool Abuse Instructions
+description: >
+  Detects instructions that direct the agent to misuse its available
+  tools (bash, file system, web browser, etc.) for unauthorized
+  purposes. These patterns specifically target agent tool capabilities
+  to perform malicious actions like executing commands, modifying
+  system files, or accessing restricted resources.
+severity: critical
+category: prompt_injection
+owasp_llm: [LLM01, LLM06]
+mitre_attack: [T1059, T1106]
+target: SKILL_MD
+engine: REGEX
+pattern:
+  any:
+    - "(?i)use\\s+the\\s+(bash|shell|terminal|command|exec|run)\\s+tool\\s+to"
+    - "(?i)(run|execute|invoke|call)\\s+(a\\s+)?(bash|shell|terminal|system)\\s+(command|tool|function)\\s+.{0,30}(curl|wget|nc|ncat|netcat|ssh|scp|rm|chmod|chown|sudo)"
+    - "(?i)use\\s+(your|the)\\s+(file|write|edit|read)\\s+tool\\s+to\\s+.{0,30}(/etc/|/root/|/home/|\\.ssh/|\\.aws/|\\.env|passwd|shadow)"
+    - "(?i)(write|create|modify|edit|append)\\s+(to\\s+)?(/etc/|/root/|\\.bashrc|\\.profile|\\.ssh/|crontab)"
+    - "(?i)use\\s+(your|the)\\s+browser\\s+tool\\s+to\\s+.{0,30}(login|authenticate|submit|post|send)"
+    - "(?i)(invoke|call|trigger|use)\\s+the\\s+\\w+\\s+tool\\s+(repeatedly|in\\s+a\\s+loop|continuously|until)"
+    - "(?i)chain\\s+(these\\s+)?tools?\\s+(together\\s+)?to\\s+.{0,30}(bypass|circumvent|override|escalate)"
+    - "(?i)use\\s+(your|the)\\s+(MCP|API)\\s+(tool|server|function)\\s+to\\s+.{0,30}(exfiltrate|steal|extract|upload|transmit)"
+false_positive_notes: >
+  Legitimate skills may reference tool usage as part of their
+  normal workflow. The key differentiator is whether tool usage
+  targets sensitive system resources or performs unauthorized actions.
+remediation: >
+  Skills should describe their intended behavior abstractly rather
+  than directly instructing the agent to use specific tools for
+  potentially harmful actions. Follow the principle of least
+  privilege for tool access.
+references:
+  - https://genai.owasp.org/llmrisk/llm01-prompt-injection/
+  - https://genai.owasp.org/llmrisk/llm06-excessive-agency/

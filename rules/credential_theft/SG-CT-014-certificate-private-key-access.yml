@@ -1,0 +1,35 @@
+id: SG-CT-014
+name: Certificate and Private Key Access
+description: >
+  Detects attempts to access TLS/SSL certificates, private keys,
+  and certificate authority files. Private keys are critical
+  cryptographic material that, if compromised, allow impersonation
+  of services and decryption of encrypted communications.
+severity: critical
+category: credential_theft
+owasp_llm: [LLM06]
+mitre_attack: [T1552.004, T1588.004]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(cat|read|open|get|less|type|head|tail|print|display)\\s+.{0,30}\\.(pem|key|p12|pfx|jks|keystore)\\b"
+    - "(?i)(cat|read|open|get)\\s+.{0,20}/etc/(ssl|pki|certs)/(private|certs)/\\S+"
+    - "(?i)(cp|copy|mv|scp|rsync|send|upload|post|transmit)\\s+.{0,30}\\.(pem|key|p12|pfx|jks)\\b"
+    - "(?i)-----BEGIN\\s+(RSA\\s+)?PRIVATE\\s+KEY-----"
+    - "(?i)-----BEGIN\\s+CERTIFICATE-----"
+    - "(?i)(steal|extract|exfiltrate|harvest|grab|dump|export)\\s+.{0,20}(certificate|cert|private\\s+key|ssl|tls|ca|signing\\s+key)"
+    - "(?i)(openssl|keytool|certutil)\\s+.{0,30}(export|pkcs12|rsa)\\s+.{0,30}(-in|-out|-passin|-passout)"
+    - "(?i)(TLS_KEY|SSL_KEY|SSL_CERT|TLS_CERT|CA_CERT|CLIENT_CERT|SERVER_KEY|SIGNING_KEY)\\s*[=:]"
+    - "(?i)\\$\\{?(TLS_KEY_FILE|SSL_KEY_FILE|SSL_CERT_FILE|TLS_CERT_FILE|CA_CERT_FILE)\\}?"
+false_positive_notes: >
+  Certificate management skills may perform legitimate key and
+  cert operations. Verify whether the skill manages certificates
+  as part of its intended TLS setup vs. extracting private keys.
+remediation: >
+  Remove references to reading private key files. Use certificate
+  managers, ACME protocol (Let's Encrypt), or HSMs for key
+  management. Never store or transmit private keys in plain text.
+references:
+  - https://attack.mitre.org/techniques/T1552/004/
+  - https://cwe.mitre.org/data/definitions/321.html

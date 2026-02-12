@@ -1,0 +1,39 @@
+id: SG-CE-007
+name: Cron/Scheduled Task Installation
+description: >
+  Detects attempts to install cron jobs, systemd timers, scheduled
+  tasks, or other persistent scheduled execution mechanisms. These
+  allow malicious code to execute repeatedly even after the initial
+  skill session ends.
+severity: critical
+category: code_execution
+owasp_llm: [LLM06]
+mitre_attack: [T1053.003, T1053.005]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(crontab\\s+-[el]|crontab\\s+<<|echo\\s+.{0,50}>>\\s*/var/spool/cron)"
+    - "(?i)(echo|printf|cat)\\s+.{0,80}(>>|>)\\s*(/etc/cron\\.(d|daily|hourly|weekly|monthly)/|/var/spool/cron/)"
+    - "(?i)\\*\\s+\\*\\s+\\*\\s+\\*\\s+\\*\\s+"
+    - "(?i)(echo|printf)\\s+[\"'].*[\"']\\s*\\|\\s*crontab"
+    - "(?i)systemctl\\s+(enable|start)\\s+.{0,30}\\.timer"
+    - "(?i)(cp|mv|write|install)\\s+.{0,40}/etc/systemd/system/\\S+\\.(timer|service)"
+    - "(?i)schtasks\\s+/create"
+    - "(?i)Register-ScheduledTask|New-ScheduledTask"
+    - "(?i)at\\s+\\d{1,2}:\\d{2}\\s+(am|pm)?\\s*"
+    - "(?i)launchctl\\s+(load|bootstrap|submit)"
+    - "(?i)(cp|mv|write|install)\\s+.{0,40}(LaunchAgents|LaunchDaemons)/\\S+\\.plist"
+    - "(?i)\\[Timer\\]\\s*\\n.*OnCalendar"
+false_positive_notes: >
+  System administration skills may legitimately configure scheduled
+  tasks. Verify whether the scheduled task serves the skill's stated
+  purpose and does not execute suspicious commands.
+remediation: >
+  Remove scheduled task installation code. Skills should not persist
+  beyond their execution context. If periodic execution is needed,
+  use the host platform's built-in scheduling mechanisms with
+  proper authorization.
+references:
+  - https://attack.mitre.org/techniques/T1053/003/
+  - https://attack.mitre.org/techniques/T1053/005/

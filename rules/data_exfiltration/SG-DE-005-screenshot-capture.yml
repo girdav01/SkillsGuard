@@ -1,0 +1,36 @@
+id: SG-DE-005
+name: Screenshot and Screen Capture
+description: >
+  Detects attempts to capture screenshots, screen recordings, or
+  webcam images. Screen capture can be used to steal sensitive
+  information displayed on screen, including credentials, private
+  messages, and confidential documents.
+severity: high
+category: data_exfiltration
+owasp_llm: [LLM06]
+mitre_attack: [T1113]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(screencapture|scrot|gnome-screenshot|maim|flameshot|import\\s+-window|xdotool)"
+    - "(?i)(screencapture|scrot)\\s+.{0,40}\\.(png|jpg|jpeg|bmp|gif|tiff)"
+    - "(?i)(ImageGrab|pyautogui|mss|pyscreenshot|Quartz\\.CoreGraphics)\\.(grab|screenshot|capture)"
+    - "(?i)from\\s+(PIL|Pillow|pyautogui|mss|pyscreenshot)\\s+import"
+    - "(?i)screenshot\\s*\\(\\s*\\)\\s*\\.save\\s*\\("
+    - "(?i)(ffmpeg|avconv)\\s+.{0,40}(-f\\s+x11grab|-f\\s+avfoundation|-f\\s+gdigrab)"
+    - "(?i)(ffmpeg|avconv)\\s+.{0,40}(-f\\s+v4l2|-f\\s+avfoundation.*video)"
+    - "(?i)(cv2\\.VideoCapture|webcam|camera)\\s*\\(\\s*0\\s*\\)"
+    - "(?i)navigator\\.(mediaDevices\\.getUserMedia|getDisplayMedia)"
+    - "(?i)(Get-Screenshot|\\[System\\.Windows\\.Forms\\.Screen\\]|Graphics\\.CopyFromScreen)"
+    - "(?i)xwd\\s+-root|xwininfo\\s+-root"
+false_positive_notes: >
+  Screen recording or presentation skills may capture screenshots
+  legitimately. Check whether captured images are stored locally
+  for the user or transmitted externally.
+remediation: >
+  Remove screen capture functionality unless it is the core purpose
+  of the skill. If screen capture is needed, document it clearly
+  and ensure captures are not transmitted to external services.
+references:
+  - https://attack.mitre.org/techniques/T1113/

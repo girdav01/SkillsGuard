@@ -1,0 +1,33 @@
+id: SG-PI-018
+name: Task Deflection
+description: >
+  Detects instructions that attempt to redirect the agent from its
+  intended task to perform a different, potentially malicious action.
+  These patterns use phrases like "instead of that, do this" or
+  "before you do anything else" to hijack the agent's workflow.
+severity: high
+category: prompt_injection
+owasp_llm: [LLM01]
+mitre_attack: [T1059.006]
+target: SKILL_MD
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(instead|rather)\\s+(of|than)\\s+(doing\\s+)?(that|what\\s+you\\s+were|your\\s+task|the\\s+above|the\\s+original)\\s*,?\\s*(do|perform|execute|run|complete)"
+    - "(?i)(before|prior\\s+to)\\s+(you\\s+do|doing|completing|executing)\\s+(anything|everything|any\\s+task|the\\s+task)\\s+(else\\s*)?,?\\s*(first\\s+)?(do|perform|execute|run)"
+    - "(?i)(stop|halt|cease|pause)\\s+(what|whatever)\\s+you\\s+(are|were)\\s+doing\\s+and"
+    - "(?i)(your\\s+)?(real|actual|true|primary|main|first|most\\s+important)\\s+task\\s+(is|should\\s+be)\\s+"
+    - "(?i)(actually|really|in\\s+fact)\\s*,?\\s*(what|you)\\s+(I\\s+want|should|need\\s+to|must)\\s+(do|is)"
+    - "(?i)the\\s+(above|previous)\\s+(was|is)\\s+(just\\s+)?(a\\s+)?(test|decoy|distraction|fake|placeholder)"
+    - "(?i)(ignore|skip)\\s+the\\s+(original|stated|given|above|primary)\\s+(task|objective|instruction|request)"
+    - "(?i)(hidden|secret|real)\\s+(task|objective|instruction|purpose)\\s*:"
+false_positive_notes: >
+  Skills that implement multi-step workflows may use sequential
+  language. Look for patterns that explicitly ask to abandon the
+  original task rather than extend it.
+remediation: >
+  Remove task deflection instructions. Skills should clearly define
+  their intended functionality without attempting to override or
+  redirect previously established tasks.
+references:
+  - https://genai.owasp.org/llmrisk/llm01-prompt-injection/

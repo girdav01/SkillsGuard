@@ -1,0 +1,43 @@
+id: SG-CE-009
+name: Privilege Escalation
+description: >
+  Detects attempts to escalate privileges through sudo, setuid,
+  capabilities manipulation, or exploiting misconfigurations. These
+  patterns indicate code that tries to gain higher permissions than
+  the current execution context allows.
+severity: critical
+category: code_execution
+owasp_llm: [LLM06]
+mitre_attack: [T1548.001, T1548.003]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)sudo\\s+(-[^ ]+\\s+)*\\S+"
+    - "(?i)echo\\s+.{0,30}\\|\\s*sudo\\s+-S"
+    - "(?i)sudo\\s+(-S|-k|--stdin)\\s+"
+    - "(?i)chmod\\s+[ugo+]*s\\s+"
+    - "(?i)chmod\\s+[0-7]*[4-7][0-7]{2}\\s+"
+    - "(?i)chown\\s+root\\s+"
+    - "(?i)(setcap|getcap)\\s+"
+    - "(?i)pkexec\\s+"
+    - "(?i)doas\\s+"
+    - "(?i)(su\\s+-\\s*$|su\\s+root|su\\s+-c)"
+    - "(?i)echo\\s+.{0,30}(>>|>)\\s*/etc/sudoers"
+    - "(?i)visudo"
+    - "(?i)(find|python|perl|ruby|vim|less|nmap|awk)\\s+.{0,30}(SUID|setuid|cap_setuid)"
+    - "(?i)/usr/bin/env\\s+.{0,20}(SUID|setuid)"
+    - "(?i)nsenter\\s+--target\\s+1"
+    - "(?i)unshare\\s+--map-root-user"
+false_positive_notes: >
+  System administration skills may legitimately require elevated
+  privileges for installation or configuration. Verify that sudo
+  usage is justified and scoped to the minimum required operations.
+remediation: >
+  Remove privilege escalation patterns. Skills should operate
+  within their current permission scope. If elevated privileges
+  are needed, document the requirement and let the user
+  explicitly grant permissions.
+references:
+  - https://attack.mitre.org/techniques/T1548/001/
+  - https://gtfobins.github.io/

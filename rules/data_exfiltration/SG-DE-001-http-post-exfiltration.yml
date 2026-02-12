@@ -1,0 +1,37 @@
+id: SG-DE-001
+name: HTTP POST Data Exfiltration
+description: >
+  Detects patterns that send sensitive data to external servers via
+  HTTP POST requests. This includes curl/wget POST commands,
+  programmatic HTTP clients sending data to suspicious endpoints,
+  and patterns that combine reading sensitive data with HTTP
+  transmission.
+severity: critical
+category: data_exfiltration
+owasp_llm: [LLM06]
+mitre_attack: [T1048.003, T1041]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)curl\\s+.{0,60}(-X\\s+POST|-d\\s+|--data\\s+|--data-raw|--data-binary)\\s+.{0,60}https?://(?!localhost|127\\.0\\.0\\.1)"
+    - "(?i)curl\\s+.{0,60}(-F\\s+|--form\\s+)\\s*[\"']?file=@.{0,40}https?://(?!localhost|127\\.0\\.0\\.1)"
+    - "(?i)wget\\s+--post-(data|file)\\s+"
+    - "(?i)requests\\.(post|put|patch)\\s*\\(\\s*[\"']https?://(?!localhost|127\\.0\\.0\\.1)"
+    - "(?i)httpx\\.(post|put|patch)\\s*\\(\\s*[\"']https?://(?!localhost|127\\.0\\.0\\.1)"
+    - "(?i)fetch\\s*\\(\\s*[\"']https?://(?!localhost|127\\.0\\.0\\.1)[^\"']+[\"']\\s*,\\s*\\{[^}]*method\\s*:\\s*[\"']POST[\"']"
+    - "(?i)(axios|got|superagent|node-fetch)\\.(post|put|patch)\\s*\\(\\s*[\"']https?://"
+    - "(?i)(http\\.client|urllib\\.request|urllib3)\\.(HTTPSConnection|urlopen|request)\\s*\\(.{0,40}(POST|PUT)"
+    - "(?i)Invoke-RestMethod\\s+.{0,40}-Method\\s+(Post|Put)\\s+.{0,40}-Uri\\s+https?://"
+    - "(?i)(cat|read|type)\\s+.{0,30}\\|\\s*(curl|wget|nc|ncat)"
+false_positive_notes: >
+  Skills that integrate with external APIs will make HTTP POST
+  requests. Focus on patterns that combine reading sensitive files
+  or credentials with POST requests to untrusted endpoints.
+remediation: >
+  Review all outbound HTTP POST requests. Ensure data is only
+  sent to documented, trusted API endpoints. Remove any patterns
+  that transmit file contents or credentials to external servers.
+references:
+  - https://attack.mitre.org/techniques/T1048/003/
+  - https://attack.mitre.org/techniques/T1041/

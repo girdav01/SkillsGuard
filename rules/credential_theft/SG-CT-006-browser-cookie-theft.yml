@@ -1,0 +1,32 @@
+id: SG-CT-006
+name: Browser Cookie and Storage Theft
+description: >
+  Detects attempts to access browser cookies, local storage, session
+  storage, or saved passwords. These storage mechanisms often contain
+  authentication tokens, session identifiers, and other sensitive data.
+severity: critical
+category: credential_theft
+owasp_llm: [LLM06]
+mitre_attack: [T1539, T1555.003]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(cat|read|open|get|sqlite3|copy|cp|dump)\\s+.{0,40}(Cookies|cookies\\.sqlite|Login\\s+Data|Web\\s+Data|History)"
+    - "(?i)(chrome|firefox|safari|brave|edge|opera|chromium)\\s*.{0,20}(cookie|password|login|credential|session|storage|bookmark)"
+    - "(?i)(~|\\.)/?(Library|AppData|config)/.{0,40}(Chrome|Firefox|BraveSoftware|Microsoft\\\\Edge|Opera|Chromium)/.{0,30}(Default|Profile)"
+    - "(?i)(document\\.cookie|localStorage\\.getItem|sessionStorage\\.getItem|indexedDB)"
+    - "(?i)(steal|extract|harvest|grab|dump|exfiltrate|export)\\s+.{0,20}(cookie|session|browser\\s+data|saved\\s+password|login\\s+data)"
+    - "(?i)(decrypt|crack|extract)\\s+.{0,20}(chrome|firefox|browser)\\s*(password|credential|cookie|master\\s+key)"
+    - "(?i)(send|post|upload|transmit|exfil)\\s+.{0,30}(cookie|session\\s+token|session\\s+id|auth\\s+cookie)"
+false_positive_notes: >
+  Browser extension or web development skills may reference cookie
+  and storage APIs in a legitimate context. Check whether the access
+  targets the user's own application data vs. other site credentials.
+remediation: >
+  Remove all references to accessing browser credential stores or
+  cookies from other applications. Skills should never access
+  browser-stored authentication data.
+references:
+  - https://attack.mitre.org/techniques/T1539/
+  - https://attack.mitre.org/techniques/T1555/003/

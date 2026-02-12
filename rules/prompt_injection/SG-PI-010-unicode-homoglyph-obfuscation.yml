@@ -1,0 +1,36 @@
+id: SG-PI-010
+name: Unicode and Homoglyph Obfuscation
+description: >
+  Detects the use of invisible Unicode characters, zero-width characters,
+  homoglyphs (visually similar characters from different scripts), and
+  other Unicode tricks used to hide or obfuscate malicious instructions.
+  These techniques make text appear benign while containing hidden payloads.
+severity: high
+category: prompt_injection
+owasp_llm: [LLM01]
+mitre_attack: [T1027, T1036.005]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "[\\x{200B}\\x{200C}\\x{200D}\\x{FEFF}\\x{00AD}\\x{2060}\\x{180E}]"
+    - "[\\x{2062}\\x{2063}\\x{2064}]"
+    - "[\\x{2066}\\x{2067}\\x{2068}\\x{2069}\\x{202A}\\x{202B}\\x{202C}\\x{202D}\\x{202E}]"
+    - "[\\x{FFF0}-\\x{FFF8}]"
+    - "[\\x{E0001}\\x{E0020}-\\x{E007F}]"
+    - "(?i)[\\x{0410}-\\x{044F}]+\\s*(ignore|forget|override|execute|system)"
+    - "[\\x{FF21}-\\x{FF3A}\\x{FF41}-\\x{FF5A}]{5,}"
+    - "[\\x{2400}-\\x{243F}]{3,}"
+    - "(?:[\\x{0300}-\\x{036F}]{3,})"
+false_positive_notes: >
+  Internationalized text or content with legitimate non-Latin scripts
+  may trigger this rule. The Cyrillic pattern specifically looks for
+  Cyrillic characters adjacent to injection keywords. Full-width
+  characters are flagged only in sequences of 5+.
+remediation: >
+  Replace all visually deceptive Unicode characters with their standard
+  ASCII equivalents. Ensure all instruction text uses standard visible
+  characters. Remove zero-width and invisible characters entirely.
+references:
+  - https://genai.owasp.org/llmrisk/llm01-prompt-injection/
+  - https://embracethered.com/blog/posts/2024/unicode-obfuscation-prompt-injection/

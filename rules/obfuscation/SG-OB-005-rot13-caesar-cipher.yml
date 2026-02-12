@@ -1,0 +1,35 @@
+id: SG-OB-005
+name: ROT13/Caesar Cipher Encoding
+description: >
+  Detects the use of ROT13, Caesar cipher, or other simple
+  substitution ciphers to encode content. While trivial to decode,
+  these ciphers can evade basic keyword-based detection and are
+  sometimes used to hide malicious instructions or commands.
+severity: low
+category: obfuscation
+owasp_llm: [LLM01]
+mitre_attack: [T1027]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(codecs\\.decode|codecs\\.encode)\\s*\\(\\s*[\"'][^\"']+[\"']\\s*,\\s*[\"']rot[_-]?13[\"']"
+    - "(?i)(str\\.maketrans|string\\.maketrans)\\s*\\(.{0,80}(ascii_lowercase|ascii_uppercase|abcdefghij)"
+    - "(?i)\\btranslate\\s*\\(\\s*(str\\.)?maketrans\\s*\\("
+    - "(?i)\\.replace\\s*\\([^)]+\\)\\s*\\.replace\\s*\\([^)]+\\)\\s*\\.replace\\s*\\([^)]+\\)\\s*\\.replace\\s*\\([^)]+\\)\\s*\\.replace"
+    - "(?i)\\brot13\\b"
+    - "(?i)\\bcaesar[_\\-]?(cipher|encrypt|decrypt|shift|encode|decode)\\b"
+    - "(?i)tr\\s+[\"']A-Za-z[\"']\\s+[\"']N-ZA-Mn-za-m[\"']"
+    - "(?i)tr/A-Za-z/N-ZA-Mn-za-m/"
+    - "(?i)String\\.fromCharCode\\s*\\(.*charCodeAt\\s*\\(.*\\)\\s*[+-]\\s*\\d+\\s*\\)"
+    - "(?i)\\bord\\s*\\(.*\\)\\s*[+-]\\s*(13|3|5|7|10|11)\\b"
+false_positive_notes: >
+  Cryptography education skills or encoding utilities may
+  implement these ciphers. Check whether the encoded content
+  hides malicious instructions vs. demonstrating cipher concepts.
+remediation: >
+  Remove obfuscated content. All skill content should be in
+  plain, readable text. If encoding examples are needed for
+  educational purposes, use obviously benign placeholder content.
+references:
+  - https://attack.mitre.org/techniques/T1027/

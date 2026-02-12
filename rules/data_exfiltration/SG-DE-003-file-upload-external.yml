@@ -1,0 +1,36 @@
+id: SG-DE-003
+name: File Upload to External Service
+description: >
+  Detects attempts to upload files to external file sharing services,
+  paste sites, cloud storage, or other third-party platforms. This
+  includes services like Pastebin, transfer.sh, file.io, and
+  various cloud storage providers.
+severity: high
+category: data_exfiltration
+owasp_llm: [LLM06]
+mitre_attack: [T1567, T1567.002]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(curl|wget|httpie)\\s+.{0,60}(pastebin\\.com|paste\\.ee|hastebin\\.com|dpaste\\.org|bpaste\\.net|ghostbin\\.co|rentry\\.co|termbin\\.com)"
+    - "(?i)(curl|wget)\\s+.{0,60}(transfer\\.sh|file\\.io|0x0\\.st|temp\\.sh|tmpfiles\\.org|gofile\\.io|wetransfer\\.com|filebin\\.net)"
+    - "(?i)(curl|wget)\\s+.{0,60}--upload-file\\s+"
+    - "(?i)(curl|wget)\\s+.{0,40}-T\\s+\\S+"
+    - "(?i)nc\\s+\\S+\\s+\\d+\\s*<\\s*\\S+"
+    - "(?i)(scp|rsync|sftp)\\s+\\S+\\s+\\w+@(?!localhost|127\\.0\\.0\\.1)"
+    - "(?i)(rclone|s3cmd|gsutil|az\\s+storage|azcopy)\\s+(copy|cp|sync|upload|put)"
+    - "(?i)(dropbox|gdrive|onedrive)\\s+(upload|put|push|sync)"
+    - "(?i)requests\\.post\\s*\\(\\s*[\"']https?://(pastebin|paste|transfer|file\\.io|0x0|hastebin)"
+    - "(?i)\\|\\s*(curl|wget|nc)\\s+.{0,40}(transfer\\.sh|file\\.io|0x0\\.st|termbin\\.com)"
+false_positive_notes: >
+  File sharing skills may legitimately upload files to services.
+  Check whether the uploaded content comes from sensitive locations
+  or if the skill explicitly handles user-selected files.
+remediation: >
+  Remove file upload patterns that target third-party services.
+  If file sharing is needed, use organization-approved services
+  with proper access controls and encryption.
+references:
+  - https://attack.mitre.org/techniques/T1567/
+  - https://attack.mitre.org/techniques/T1567/002/

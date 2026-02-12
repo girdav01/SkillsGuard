@@ -1,0 +1,34 @@
+id: SG-CT-008
+name: Cloud Provider Token Theft (GCP, Azure)
+description: >
+  Detects attempts to access GCP and Azure credentials, service
+  account keys, managed identity tokens, and cloud CLI configuration
+  files containing authentication information.
+severity: critical
+category: credential_theft
+owasp_llm: [LLM06]
+mitre_attack: [T1552.001, T1552.005]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(cat|read|open|get|less|type|head|tail|print)\\s+.{0,20}(~|\\.)/?\\.config/gcloud/(credentials\\.db|access_tokens\\.db|application_default_credentials\\.json|properties)"
+    - "(?i)(cat|read|open|get)\\s+.{0,20}(service[_-]?account[_-]?key|gcp[_-]?key|google[_-]?credentials)\\.json"
+    - "(?i)\\$\\{?(GOOGLE_APPLICATION_CREDENTIALS|GOOGLE_CLOUD_PROJECT|GCLOUD_SERVICE_KEY|GCP_SERVICE_ACCOUNT|GOOGLE_API_KEY)\\}?"
+    - "(?i)(cat|read|open|get|less|type|head|tail|print)\\s+.{0,20}(~|\\.)/?\\.azure/(accessTokens\\.json|azureProfile\\.json|msal_token_cache)"
+    - "(?i)\\$\\{?(AZURE_CLIENT_SECRET|AZURE_TENANT_ID|AZURE_CLIENT_ID|AZURE_SUBSCRIPTION_ID|ARM_CLIENT_SECRET|AZURE_STORAGE_KEY)\\}?"
+    - "(?i)curl\\s+.{0,30}169\\.254\\.169\\.254/metadata.{0,30}(token|identity|service-account)"
+    - "(?i)curl\\s+.{0,30}metadata\\.google\\.internal.{0,30}(token|identity|service-account)"
+    - "(?i)(az|gcloud)\\s+(account|auth|iam)\\s+(get-access-token|print-access-token|list|show)"
+    - "(?i)(steal|extract|exfiltrate|harvest|grab|dump)\\s+.{0,20}(gcp|google|azure|cloud)\\s*(credential|token|secret|key)"
+false_positive_notes: >
+  Cloud deployment or DevOps skills may reference cloud credential
+  configuration. Check if the skill configures credentials vs.
+  extracting existing ones.
+remediation: >
+  Use managed identities, workload identity federation, or
+  application default credentials instead of directly reading
+  credential files or tokens from metadata endpoints.
+references:
+  - https://attack.mitre.org/techniques/T1552/005/
+  - https://cloud.google.com/docs/authentication

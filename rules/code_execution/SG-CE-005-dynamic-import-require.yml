@@ -1,0 +1,38 @@
+id: SG-CE-005
+name: Dynamic Import/Require
+description: >
+  Detects dynamic module imports that could load malicious code at
+  runtime. This includes Python's __import__, importlib, Node.js
+  dynamic require(), and similar mechanisms that load code based
+  on runtime-computed strings.
+severity: high
+category: code_execution
+owasp_llm: [LLM06]
+mitre_attack: [T1059.006, T1129]
+target: SCRIPT
+engine: REGEX
+pattern:
+  any:
+    - "(?i)__import__\\s*\\(\\s*(input|request|argv|sys\\.stdin|os\\.environ|os\\.getenv)"
+    - "(?i)importlib\\.import_module\\s*\\(\\s*(input|request|argv|sys\\.stdin|os\\.environ|f[\"'])"
+    - "(?i)importlib\\.import_module\\s*\\(\\s*[\"'].*\\+\\s*"
+    - "(?i)require\\s*\\(\\s*(process\\.argv|req\\.|request\\.|input|Buffer\\.from)"
+    - "(?i)require\\s*\\(\\s*[\"']\\s*\\+\\s*"
+    - "(?i)require\\s*\\(\\s*`.*\\$\\{.*\\}`\\s*\\)"
+    - "(?i)import\\s*\\(\\s*[\"']\\s*\\+\\s*"
+    - "(?i)import\\s*\\(\\s*`.*\\$\\{.*\\}`\\s*\\)"
+    - "(?i)__import__\\s*\\(\\s*[\"']\\s*\\+\\s*"
+    - "(?i)ctypes\\.(cdll|windll|oledll)\\.LoadLibrary\\s*\\("
+    - "(?i)ctypes\\.CDLL\\s*\\("
+    - "(?i)dlopen\\s*\\(\\s*(input|argv|request|getenv)"
+false_positive_notes: >
+  Plugin systems and extensible architectures use dynamic imports
+  legitimately. Check if the import path comes from validated
+  configuration vs. untrusted user input.
+remediation: >
+  Use static imports whenever possible. If dynamic loading is
+  required, validate module names against an allowlist and never
+  use untrusted input to construct module paths.
+references:
+  - https://cwe.mitre.org/data/definitions/502.html
+  - https://attack.mitre.org/techniques/T1129/

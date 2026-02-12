@@ -1,0 +1,39 @@
+id: SG-CE-015
+name: Webshell Patterns
+description: >
+  Detects webshell patterns in script files that provide remote
+  command execution capabilities through web interfaces. Webshells
+  are commonly used for persistent backdoor access after initial
+  compromise.
+severity: critical
+category: code_execution
+owasp_llm: [LLM06]
+mitre_attack: [T1505.003]
+target: SCRIPT
+engine: REGEX
+pattern:
+  any:
+    - "(?i)<\\?php\\s+.{0,50}(system|exec|passthru|shell_exec|popen|proc_open)\\s*\\(\\s*\\$_(GET|POST|REQUEST|COOKIE)"
+    - "(?i)\\$_(GET|POST|REQUEST|COOKIE)\\s*\\[.*\\]\\s*;?\\s*(system|exec|passthru|shell_exec|popen|eval)\\s*\\("
+    - "(?i)eval\\s*\\(\\s*(gzinflate|gzuncompress|base64_decode|str_rot13|gzdecode)\\s*\\("
+    - "(?i)eval\\s*\\(\\s*\\$_(GET|POST|REQUEST|COOKIE|SERVER)"
+    - "(?i)assert\\s*\\(\\s*\\$_(GET|POST|REQUEST|COOKIE)"
+    - "(?i)preg_replace\\s*\\(\\s*[\"'].*/e[\"']"
+    - "(?i)(cmd|command|exec|execute|shell|run|c)\\s*=\\s*(request|params|query)\\."
+    - "(?i)os\\.system\\s*\\(\\s*(request\\.(args|form|values)|flask\\.request)"
+    - "(?i)subprocess\\.(call|run|Popen)\\s*\\(\\s*(request\\.(args|form)|flask\\.request)"
+    - "(?i)Runtime\\.getRuntime\\(\\)\\s*\\.exec\\s*\\(\\s*request\\.getParameter"
+    - "(?i)(c99|r57|b374k|wso|alfa|mini\\s*shell|webshell|php\\s*spy|cyber\\s*shell)"
+    - "(?i)cmd\\.exe\\s+/c\\s+.*\\$\\{?(request|query|param)"
+false_positive_notes: >
+  Web frameworks may process user input in ways that resemble
+  webshell patterns. Verify that user input processing includes
+  proper sanitization and does not directly execute commands.
+remediation: >
+  Remove all webshell patterns. Web-facing components should never
+  pass user input directly to system command execution functions.
+  Implement input validation, parameterized commands, and
+  least-privilege execution.
+references:
+  - https://attack.mitre.org/techniques/T1505/003/
+  - https://cwe.mitre.org/data/definitions/94.html

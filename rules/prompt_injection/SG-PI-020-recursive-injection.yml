@@ -1,0 +1,33 @@
+id: SG-PI-020
+name: Recursive Injection
+description: >
+  Detects instructions that attempt to create self-reinforcing or
+  recursive prompt injection loops. These patterns instruct the agent
+  to repeat the injection to itself, propagate the injection to other
+  conversations, or create self-replicating prompts.
+severity: high
+category: prompt_injection
+owasp_llm: [LLM01]
+mitre_attack: [T1059.006]
+target: SKILL_MD
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(repeat|replay|echo|recite|re-read)\\s+(this|the\\s+above|the\\s+following|these)\\s+(prompt|instructions?|message|text|words)\\s+(to|back\\s+to)\\s+(yourself|your\\s+system)"
+    - "(?i)(include|inject|embed|insert|propagate|spread)\\s+(this|these|the\\s+following)\\s+(instructions?|prompt|message|text|payload)\\s+(in|into|to)\\s+(all|every|each|future|subsequent)"
+    - "(?i)(append|prepend|add)\\s+(this|these|the\\s+following)\\s+(to|into)\\s+(every|all|each|future)\\s+(response|reply|output|message|conversation)"
+    - "(?i)(self[.-]?replicat|worm|propagat|viral)\\s*(e|ing|ion)"
+    - "(?i)(copy|duplicate|clone)\\s+(yourself|this\\s+prompt|these\\s+instructions)\\s+(to|into|across)"
+    - "(?i)for\\s+every\\s+(response|reply|interaction|conversation)\\s*,?\\s*(include|repeat|prepend|append|add)\\s+this"
+    - "(?i)(always|forever|permanently|in\\s+perpetuity)\\s+(include|repeat|echo|add)\\s+(this|these)\\s+(instructions?|text|prompt)"
+false_positive_notes: >
+  Skills that implement template systems or boilerplate may use
+  repetition patterns. Check if the recursive pattern aims to
+  propagate injection rather than produce legitimate output.
+remediation: >
+  Remove all self-replicating or recursive instruction patterns.
+  Skills should contain static instructions that do not attempt
+  to propagate or replicate themselves across conversations.
+references:
+  - https://genai.owasp.org/llmrisk/llm01-prompt-injection/
+  - https://arxiv.org/abs/2403.02817

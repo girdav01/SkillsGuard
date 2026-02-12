@@ -1,0 +1,36 @@
+id: SG-DE-010
+name: Steganography Patterns
+description: >
+  Detects the use of steganographic techniques to hide data within
+  images, audio files, or other media. Steganography can be used
+  to conceal exfiltrated data or hidden instructions within
+  seemingly innocent files.
+severity: medium
+category: data_exfiltration
+owasp_llm: [LLM06]
+mitre_attack: [T1027.003, T1001.002]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(steghide|stegano|openstego|snow|stegsolve|zsteg|stegcracker)"
+    - "(?i)steghide\\s+(embed|extract|info)\\s+"
+    - "(?i)(import|from|require)\\s+.{0,20}(stegano|steganography|steg|lsb)"
+    - "(?i)LSB\\s*(encode|decode|embed|extract|hide|reveal)"
+    - "(?i)(PIL|Pillow|cv2|imageio)\\s*.{0,40}(putpixel|setpixel|getpixel)\\s*\\(.{0,40}(\\&|\\||\\^|>>|<<)"
+    - "(?i)(encode|hide|embed|conceal)\\s+.{0,20}(data|message|text|secret|payload)\\s+(in|into|within|inside)\\s+(image|photo|picture|audio|video|media)"
+    - "(?i)(decode|reveal|extract|uncover)\\s+.{0,20}(data|message|text|secret|payload|hidden)\\s+(from|in|within)\\s+(image|photo|picture|audio|video|media)"
+    - "(?i)\\b(jphide|jpseek|mp3stego|spectrology|coagula|sonic-visualiser)\\b"
+    - "(?i)wav\\.(readframes|writeframes)\\s*\\(.{0,40}(encode|decode|xor|\\^)"
+    - "(?i)bit\\s*=\\s*.{0,20}(pixel|sample)\\s*.{0,10}(\\&|>>|<<)\\s*1"
+false_positive_notes: >
+  Digital art, media processing, or security education skills may
+  reference steganography concepts. Check whether the skill
+  implements steganography for data hiding vs. analyzing it.
+remediation: >
+  Remove steganography implementations. Skills should not hide
+  data within media files. If media processing is needed, ensure
+  no data concealment techniques are employed.
+references:
+  - https://attack.mitre.org/techniques/T1027/003/
+  - https://attack.mitre.org/techniques/T1001/002/

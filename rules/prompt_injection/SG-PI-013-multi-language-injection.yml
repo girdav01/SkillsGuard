@@ -1,0 +1,35 @@
+id: SG-PI-013
+name: Multi-language Injection
+description: >
+  Detects prompt injection attempts written in non-English languages.
+  Attackers may use other languages to bypass English-focused safety
+  filters. Common injection patterns are matched across several
+  languages including Spanish, French, German, Chinese, and others.
+severity: medium
+category: prompt_injection
+owasp_llm: [LLM01]
+mitre_attack: [T1027]
+target: SKILL_MD
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(ignora|ignorar)\\s+(las\\s+)?(instrucciones|reglas|directrices)\\s+(anteriores|previas)"
+    - "(?i)(ignorez|ignore[rz])\\s+(les\\s+)?(instructions|r[eè]gles|directives)\\s+(pr[eé]c[eé]dentes|ant[eé]rieures)"
+    - "(?i)(ignoriere|vergiss)\\s+(die\\s+)?(vorherigen|bisherigen|fr[uü]heren)\\s+(Anweisungen|Regeln|Instruktionen)"
+    - "(?i)\u5ffd\u7565.{0,10}(\u6307\u4ee4|\u8bf4\u660e|\u89c4\u5219|\u6307\u793a)"
+    - "(?i)\u7121\u8996.{0,10}(\u6307\u793a|\u8aaa\u660e|\u898f\u5247)"
+    - "(?i)(\u524d\u306e|\u4ee5\u524d\u306e)(\u6307\u793a|\u547d\u4ee4|\u30eb\u30fc\u30eb)\u3092(\u7121\u8996|\u5ffd\u7565)"
+    - "(?i)(ignora|dimentica)\\s+(le\\s+)?(istruzioni|regole|direttive)\\s+(precedenti|anteriori)"
+    - "(?i)(\u0438\u0433\u043d\u043e\u0440\u0438\u0440\u0443\u0439|\u043f\u0440\u043e\u0438\u0433\u043d\u043e\u0440\u0438\u0440\u0443\u0439)\\s+.{0,20}(\u0438\u043d\u0441\u0442\u0440\u0443\u043a\u0446\u0438\u0438|\u043f\u0440\u0430\u0432\u0438\u043b\u0430|\u0443\u043a\u0430\u0437\u0430\u043d\u0438\u044f)"
+    - "(?i)(\ubb34\uc2dc|\ubb34\uc2dc\ud558|\ubb34\uc2dc\ud574).{0,10}(\uc9c0\uc2dc|\uba85\ub839|\uaddc\uce59)"
+false_positive_notes: >
+  Multilingual skills may contain instruction-like text in other
+  languages as part of legitimate localization or translation tasks.
+  Review the full context to determine intent.
+remediation: >
+  Ensure all skill instructions are transparent and do not use
+  alternative languages to circumvent safety filters. If multilingual
+  content is needed, ensure it does not contain injection patterns.
+references:
+  - https://genai.owasp.org/llmrisk/llm01-prompt-injection/
+  - https://arxiv.org/abs/2310.02446

@@ -1,0 +1,36 @@
+id: SG-DE-008
+name: Cloud Storage Upload (S3, GCS, Azure Blob)
+description: >
+  Detects attempts to upload data to cloud storage services including
+  AWS S3, Google Cloud Storage, and Azure Blob Storage. While cloud
+  storage is commonly used, unauthorized uploads can serve as data
+  exfiltration channels.
+severity: high
+category: data_exfiltration
+owasp_llm: [LLM06]
+mitre_attack: [T1567.002]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)aws\\s+s3\\s+(cp|mv|sync|put-object)\\s+\\S+\\s+s3://"
+    - "(?i)s3cmd\\s+(put|sync)\\s+\\S+\\s+s3://"
+    - "(?i)boto3\\.client\\s*\\(\\s*[\"']s3[\"']\\s*\\).*upload_file"
+    - "(?i)s3\\.upload_file\\s*\\(|s3\\.put_object\\s*\\("
+    - "(?i)gsutil\\s+(cp|mv|rsync)\\s+\\S+\\s+gs://"
+    - "(?i)storage\\.Client\\s*\\(\\s*\\).*upload_from_(filename|string|file)"
+    - "(?i)blob\\.upload_blob\\s*\\(|blob_client\\.upload_blob\\s*\\("
+    - "(?i)az\\s+storage\\s+blob\\s+upload"
+    - "(?i)azcopy\\s+copy\\s+\\S+\\s+https://\\S+\\.blob\\.core\\.windows\\.net"
+    - "(?i)(curl|wget)\\s+.{0,40}(-X\\s+PUT|--upload-file)\\s+.{0,40}(s3\\.amazonaws\\.com|storage\\.googleapis\\.com|blob\\.core\\.windows\\.net)"
+    - "(?i)(backblaze|b2|minio|wasabi)\\s*.{0,30}(upload|put|copy|sync)"
+false_positive_notes: >
+  Cloud deployment and backup skills may legitimately upload to
+  cloud storage. Verify that uploads target organization-owned
+  storage and do not include sensitive system files or credentials.
+remediation: >
+  Remove unauthorized cloud storage upload patterns. If cloud
+  storage is required, ensure uploads go to organization-controlled
+  buckets with proper access controls and encryption.
+references:
+  - https://attack.mitre.org/techniques/T1567/002/

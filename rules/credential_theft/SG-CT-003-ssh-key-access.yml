@@ -1,0 +1,34 @@
+id: SG-CT-003
+name: SSH Key Access
+description: >
+  Detects attempts to read, copy, or exfiltrate SSH private keys,
+  known_hosts files, or SSH configuration. SSH keys provide
+  authentication to remote systems and their theft enables
+  unauthorized lateral movement.
+severity: critical
+category: credential_theft
+owasp_llm: [LLM06]
+mitre_attack: [T1552.004, T1021.004]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(cat|less|more|head|tail|type|read|open|print|display|show)\\s+.{0,20}(~|\\.)/?\\.ssh/(id_rsa|id_ed25519|id_ecdsa|id_dsa|identity|authorized_keys|known_hosts|config)"
+    - "(?i)(cp|copy|mv|move|scp|rsync)\\s+.{0,20}\\.ssh/"
+    - "(?i)(cat|read|open|get)\\s+.{0,10}(/home/\\w+|~)/\\.ssh/"
+    - "(?i)(send|post|upload|transmit|exfil|curl|wget)\\s+.{0,40}\\.ssh/"
+    - "(?i)-----BEGIN\\s+(RSA|DSA|EC|OPENSSH)\\s+PRIVATE\\s+KEY-----"
+    - "(?i)(find|ls|dir|glob|locate)\\s+.{0,30}\\.ssh"
+    - "(?i)ssh[_-]?(private|pub)?[_-]?key\\s*(=|:)\\s*[\"']"
+    - "(?i)(steal|extract|exfiltrate|harvest|grab|dump)\\s+.{0,20}ssh\\s*(key|credential|private)"
+false_positive_notes: >
+  SSH management or DevOps skills may legitimately reference SSH
+  key operations. Check if the skill performs key generation or
+  management vs. reading existing private keys.
+remediation: >
+  Remove all references to reading SSH private keys. Skills should
+  never access private key material. If SSH operations are needed,
+  use SSH agent forwarding or managed key services.
+references:
+  - https://cwe.mitre.org/data/definitions/522.html
+  - https://attack.mitre.org/techniques/T1552/004/

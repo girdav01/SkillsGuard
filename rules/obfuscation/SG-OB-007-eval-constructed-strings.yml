@@ -1,0 +1,39 @@
+id: SG-OB-007
+name: Eval of Constructed Strings
+description: >
+  Detects patterns where strings are dynamically constructed through
+  various techniques (concatenation, encoding, array joining) and
+  then passed to eval, exec, or similar execution functions. This
+  is a compound obfuscation technique that combines string
+  construction with dynamic execution.
+severity: critical
+category: obfuscation
+owasp_llm: [LLM01, LLM06]
+mitre_attack: [T1027, T1059]
+target: SCRIPT
+engine: REGEX
+pattern:
+  any:
+    - "(?i)eval\\s*\\(\\s*[\"'].*[\"']\\s*\\+\\s*[\"'].*[\"']\\s*\\)"
+    - "(?i)eval\\s*\\(\\s*\\[.*\\]\\.join\\s*\\("
+    - "(?i)eval\\s*\\(\\s*(atob|btoa|Buffer\\.from|base64\\.b64decode|codecs\\.decode)"
+    - "(?i)exec\\s*\\(\\s*(base64\\.b64decode|codecs\\.decode|bytes\\.fromhex|binascii\\.unhexlify)"
+    - "(?i)eval\\s*\\(\\s*String\\.fromCharCode\\s*\\("
+    - "(?i)eval\\s*\\(\\s*(unescape|decodeURIComponent)\\s*\\("
+    - "(?i)(Function|new\\s+Function)\\s*\\(\\s*[\"'].*[\"']\\s*\\+\\s*"
+    - "(?i)exec\\s*\\(\\s*compile\\s*\\("
+    - "(?i)eval\\s*\\(\\s*\\w+\\.replace\\s*\\("
+    - "(?i)(setTimeout|setInterval)\\s*\\(\\s*[\"'].*\\+.*[\"']"
+    - "(?i)\\$\\{.*\\}.*\\|\\s*(bash|sh|python|perl|ruby|node)"
+    - "(?i)getattr\\s*\\(.*,\\s*(base64|codecs|binascii)\\s*\\.\\s*(b64decode|decode|unhexlify)"
+false_positive_notes: >
+  Some template engines and code generation tools construct
+  strings before evaluation. The compound pattern of construction
+  plus evaluation is the key indicator of malicious intent.
+remediation: >
+  Remove all eval/exec calls on dynamically constructed strings.
+  Use static code, parameterized templates, or safe parsing
+  functions instead of dynamic code execution.
+references:
+  - https://attack.mitre.org/techniques/T1027/
+  - https://cwe.mitre.org/data/definitions/95.html

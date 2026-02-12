@@ -1,0 +1,36 @@
+id: SG-PI-007
+name: Output Manipulation
+description: >
+  Detects instructions that attempt to force the agent to produce
+  specific, controlled output regardless of the actual task context.
+  This includes patterns like "always respond with", "only output",
+  or "your response must be". Output manipulation can be used to
+  create deceptive or harmful agent behaviors.
+severity: high
+category: prompt_injection
+owasp_llm: [LLM01, LLM02]
+mitre_attack: [T1565]
+target: SKILL_MD
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(always|must|shall|only)\\s+(respond|reply|answer|output)\\s+with"
+    - "(?i)your\\s+(response|output|reply|answer)\\s+(must|shall|should)\\s+(always|only)\\s+be"
+    - "(?i)never\\s+(respond|reply|answer|output|say|mention)\\s+.{0,30}(instead|but|rather)"
+    - "(?i)only\\s+output\\s+(the\\s+following|exactly|this)"
+    - "(?i)(append|prepend|include|insert)\\s+(this|the\\s+following)\\s+(to|in|into)\\s+(every|all|each)\\s+(response|output|reply)"
+    - "(?i)format\\s+(all|every)\\s+(response|output|reply)\\s+as"
+    - "(?i)replace\\s+(all|any|every)\\s+(response|output)\\s+with"
+    - "(?i)regardless\\s+of\\s+(what|the|any)\\s+.{0,30}(respond|output|reply|say)"
+    - "(?i)no\\s+matter\\s+what\\s+.{0,20}(respond|output|reply|say)\\s+with"
+false_positive_notes: >
+  Skills that define output formatting requirements (e.g., "respond
+  in JSON format") may trigger this rule. Review whether the instruction
+  constrains format vs. content to distinguish legitimate from malicious.
+remediation: >
+  Instead of forcing specific output, describe the desired format
+  or structure. Avoid instructions that override the agent's ability
+  to respond truthfully and contextually.
+references:
+  - https://genai.owasp.org/llmrisk/llm01-prompt-injection/
+  - https://genai.owasp.org/llmrisk/llm02-insecure-output-handling/

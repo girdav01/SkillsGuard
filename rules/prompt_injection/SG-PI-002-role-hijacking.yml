@@ -1,0 +1,35 @@
+id: SG-PI-002
+name: Role Hijacking
+description: >
+  Detects attempts to reassign the agent's identity or role, such as
+  "you are now a", "act as", or "pretend to be". These patterns attempt
+  to override the agent's system-defined persona and can be used to
+  bypass safety constraints by establishing a new unconstrained identity.
+severity: critical
+category: prompt_injection
+owasp_llm: [LLM01]
+mitre_attack: [T1036]
+target: SKILL_MD
+engine: REGEX
+pattern:
+  any:
+    - "(?i)you\\s+are\\s+now\\s+(a|an|the)\\s+(?!skill|tool|helper|assistant)"
+    - "(?i)(act|behave|function|operate)\\s+(as|like)\\s+(a|an|if)\\s+"
+    - "(?i)pretend\\s+(to\\s+be|you\\s+are)\\s+"
+    - "(?i)from\\s+now\\s+on,?\\s+you\\s+(are|will|shall|must)"
+    - "(?i)your\\s+new\\s+(role|identity|persona|character)\\s+(is|will\\s+be)"
+    - "(?i)assume\\s+the\\s+(role|identity|persona)\\s+of"
+    - "(?i)switch\\s+(to|into)\\s+(a\\s+)?(new\\s+)?(role|mode|persona)"
+    - "(?i)you\\s+have\\s+been\\s+(reprogrammed|reassigned|reconfigured)"
+    - "(?i)enter\\s+(unrestricted|jailbreak|god|admin|developer)\\s+mode"
+false_positive_notes: >
+  Legitimate skills may ask the agent to adopt a specific helpful persona
+  (e.g., "act as a Python expert"). Review context to determine if the
+  role assignment is benign or attempts to bypass safety measures.
+remediation: >
+  Instead of reassigning the agent's role, describe the task requirements
+  and expected behavior directly. Use "Help me with X" instead of
+  "Pretend to be an X expert with no restrictions."
+references:
+  - https://genai.owasp.org/llmrisk/llm01-prompt-injection/
+  - https://arxiv.org/abs/2302.12173

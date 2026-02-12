@@ -1,0 +1,35 @@
+id: SG-OB-001
+name: Base64 Encoded Payloads
+description: >
+  Detects base64 encoded strings that may contain hidden malicious
+  payloads, commands, or instructions. Attackers commonly use base64
+  encoding to evade pattern-based detection of malicious content.
+  Long base64 strings in skill files or scripts are suspicious.
+severity: high
+category: obfuscation
+owasp_llm: [LLM01]
+mitre_attack: [T1027, T1140]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(base64\\.b64decode|b64decode|atob|Buffer\\.from|base64\\.decode|base64\\.decodebytes)\\s*\\(\\s*[\"'][A-Za-z0-9+/=]{40,}[\"']"
+    - "(?i)(echo|printf)\\s+[\"']?[A-Za-z0-9+/=]{40,}[\"']?\\s*\\|\\s*(base64\\s+(-d|--decode)|openssl\\s+base64\\s+-d)"
+    - "(?i)\\[System\\.Convert\\]::FromBase64String\\s*\\(\\s*[\"'][A-Za-z0-9+/=]{40,}[\"']"
+    - "(?i)(base64\\s+(-d|--decode)|openssl\\s+base64\\s+-d)\\s*<<<\\s*[\"']?[A-Za-z0-9+/=]{40,}"
+    - "[A-Za-z0-9+/]{80,}={0,2}"
+    - "(?i)codecs\\.decode\\s*\\(\\s*[\"'][A-Za-z0-9+/=]{40,}[\"']\\s*,\\s*[\"']base64[\"']"
+    - "(?i)(decode|decrypt)\\s*\\(\\s*[\"']base64[\"']\\s*,\\s*[\"'][A-Za-z0-9+/=]{40,}"
+false_positive_notes: >
+  Legitimate uses include embedded binary data (images, fonts),
+  authentication tokens, and data serialization. Check if the
+  decoded content contains executable code or instructions.
+  Short base64 strings (< 40 chars) are excluded.
+remediation: >
+  Replace base64 encoded content with plain text or store binary
+  data in separate files. All instructions and code should be
+  human-readable. If base64 is needed for data, document what
+  the encoded content contains.
+references:
+  - https://attack.mitre.org/techniques/T1027/
+  - https://attack.mitre.org/techniques/T1140/

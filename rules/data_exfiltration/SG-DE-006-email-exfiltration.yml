@@ -1,0 +1,37 @@
+id: SG-DE-006
+name: Email-based Data Exfiltration
+description: >
+  Detects attempts to send data via email, which can be used to
+  exfiltrate sensitive information to attacker-controlled accounts.
+  This includes command-line mail utilities, SMTP libraries, and
+  email API services.
+severity: high
+category: data_exfiltration
+owasp_llm: [LLM06]
+mitre_attack: [T1048.002, T1567.001]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(mail|sendmail|mutt|mailx|ssmtp|msmtp)\\s+(-s\\s+)?[\"']?\\S+@\\S+\\.(com|net|org|io)"
+    - "(?i)(cat|type|read)\\s+\\S+\\s*\\|\\s*(mail|sendmail|mutt|mailx)"
+    - "(?i)smtplib\\.SMTP\\s*\\(\\s*[\"'](?!localhost|127\\.0\\.0\\.1)"
+    - "(?i)(smtplib|email\\.mime)\\s*.{0,80}(sendmail|send_message)\\s*\\("
+    - "(?i)nodemailer\\.createTransport\\s*\\("
+    - "(?i)(sgMail|sendgrid|mailgun|ses\\.sendEmail|ses\\.send_email|postmark)"
+    - "(?i)Send-MailMessage\\s+.{0,40}-To\\s+"
+    - "(?i)swaks\\s+--to\\s+"
+    - "(?i)(curl|wget)\\s+.{0,40}(api\\.mailgun\\.net|api\\.sendgrid\\.com|email\\.us-east)"
+    - "(?i)smtp\\.(gmail|yahoo|outlook|hotmail|protonmail|aol)\\.(com|net)"
+false_positive_notes: >
+  Email notification skills may send messages legitimately.
+  Check whether the email content includes sensitive data like
+  file contents, credentials, or system information.
+remediation: >
+  Remove email-based data transmission patterns. If email
+  notifications are needed, use organization-approved email
+  services and never include sensitive file contents or
+  credentials in email bodies.
+references:
+  - https://attack.mitre.org/techniques/T1048/002/
+  - https://attack.mitre.org/techniques/T1567/001/

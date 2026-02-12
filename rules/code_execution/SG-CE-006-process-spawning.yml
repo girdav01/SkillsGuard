@@ -1,0 +1,39 @@
+id: SG-CE-006
+name: Process Spawning
+description: >
+  Detects patterns of process spawning that may indicate attempts
+  to run unauthorized programs, escalate privileges, or establish
+  persistence through background processes.
+severity: high
+category: code_execution
+owasp_llm: [LLM06]
+mitre_attack: [T1059, T1106]
+target: SCRIPT
+engine: REGEX
+pattern:
+  any:
+    - "(?i)os\\.(fork|exec[lv]p?e?|spawn[lv]p?e?)\\s*\\("
+    - "(?i)subprocess\\.Popen\\s*\\(\\s*\\[[\"'](/bin/|/usr/bin/|cmd|powershell|bash|sh|python|perl|ruby)"
+    - "(?i)(child_process|cp)\\.(exec|execSync|execFile|fork|spawn|spawnSync)\\s*\\("
+    - "(?i)ProcessBuilder\\s*\\(\\s*(Arrays\\.asList\\s*\\()?\\s*[\"'](cmd|/bin/|bash|sh|python|perl)"
+    - "(?i)Runtime\\.getRuntime\\s*\\(\\s*\\)\\s*\\.exec\\s*\\("
+    - "(?i)ShellExecute[AW]?\\s*\\(|CreateProcess[AW]?\\s*\\("
+    - "(?i)WScript\\.Shell|Shell\\.Application"
+    - "(?i)nohup\\s+.+\\s+&"
+    - "(?i)setsid\\s+.+\\s+&"
+    - "(?i)disown\\s+-h"
+    - "(?i)screen\\s+-dmS\\s+\\S+\\s+.+"
+    - "(?i)tmux\\s+(new-session|new)\\s+-d"
+    - "(?i)start\\s+/b\\s+"
+false_positive_notes: >
+  Build tools, task runners, and development skills may legitimately
+  spawn processes. Check if spawned processes are part of a normal
+  development workflow vs. suspicious commands.
+remediation: >
+  Minimize process spawning. When necessary, use the most restricted
+  execution method available, validate all command arguments, and
+  avoid spawning background processes that persist beyond the
+  skill's execution context.
+references:
+  - https://attack.mitre.org/techniques/T1106/
+  - https://cwe.mitre.org/data/definitions/78.html

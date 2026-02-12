@@ -1,0 +1,34 @@
+id: SG-OB-006
+name: Unicode Escape Sequences
+description: >
+  Detects extensive use of Unicode escape sequences to represent
+  ASCII text, which can be used to hide malicious keywords from
+  text-based scanners while remaining functional when interpreted.
+severity: medium
+category: obfuscation
+owasp_llm: [LLM01]
+mitre_attack: [T1027]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(\\\\u[0-9a-fA-F]{4}){5,}"
+    - "(\\\\u\\{[0-9a-fA-F]{1,6}\\}){5,}"
+    - "(\\\\U[0-9a-fA-F]{8}){3,}"
+    - "(\\\\x[0-9a-fA-F]{2}){8,}"
+    - "(&#x?[0-9a-fA-F]+;){5,}"
+    - "(?i)(\\\\u00[2-7][0-9a-fA-F]){5,}"
+    - "(?i)String\\.fromCodePoint\\s*\\(\\s*\\d+\\s*(,\\s*\\d+\\s*){5,}\\)"
+    - "(?i)(\\\\N\\{[^}]+\\}){3,}"
+    - "(%[0-9a-fA-F]{2}){8,}"
+    - "(?i)unescape\\s*\\(\\s*[\"'](%[0-9a-fA-F]{2}){5,}[\"']\\s*\\)"
+false_positive_notes: >
+  Internationalization code and emoji handling may use Unicode
+  escapes. The patterns require a minimum sequence length to
+  avoid flagging legitimate single-character references.
+remediation: >
+  Replace Unicode escape sequences with the actual characters
+  they represent, or use standard string literals. Code should
+  be readable without requiring manual decoding.
+references:
+  - https://attack.mitre.org/techniques/T1027/

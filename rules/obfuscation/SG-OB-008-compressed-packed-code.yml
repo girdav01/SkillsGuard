@@ -1,0 +1,36 @@
+id: SG-OB-008
+name: Compressed/Packed Code
+description: >
+  Detects the use of code compression, packing, or minification
+  tools that are commonly used to hide malicious payloads. This
+  includes JavaScript packers, Python bytecode execution, gzip
+  compressed payloads, and similar compression-based obfuscation.
+severity: medium
+category: obfuscation
+owasp_llm: [LLM01]
+mitre_attack: [T1027.002]
+target: SCRIPT
+engine: REGEX
+pattern:
+  any:
+    - "(?i)eval\\s*\\(\\s*function\\s*\\(\\s*p\\s*,\\s*a\\s*,\\s*c\\s*,\\s*k\\s*,\\s*e\\s*,\\s*[dr]\\s*\\)"
+    - "(?i)(gzinflate|gzuncompress|gzdecode|bzdecompress)\\s*\\(\\s*(base64_decode|hex2bin|pack)"
+    - "(?i)(zlib\\.decompress|gzip\\.decompress|bz2\\.decompress|lzma\\.decompress)\\s*\\(\\s*(base64\\.b64decode|bytes\\.fromhex|binascii)"
+    - "(?i)exec\\s*\\(\\s*(zlib|gzip|bz2|lzma)\\.(decompress|open)\\s*\\("
+    - "(?i)Buffer\\.from\\s*\\(.*[\"']base64[\"']\\s*\\).*zlib\\.(inflate|gunzip|unzip)"
+    - "(?i)marshal\\.loads\\s*\\(\\s*(zlib|gzip|base64)"
+    - "(?i)exec\\s*\\(\\s*marshal\\.loads\\s*\\("
+    - "(?i)types\\.CodeType\\s*\\("
+    - "(?i)\\.pyc|\\.pyo|__pycache__.*exec"
+    - "(?i)unpack\\s*\\(\\s*[\"'][^\"']+[\"']\\s*,.*\\).*exec"
+    - "(?i)(p,a,c,k,e,d|packer|obfuscator|uglify)"
+false_positive_notes: >
+  Minified production JavaScript and compiled Python are common.
+  The patterns focus on packed code being fed directly to eval/exec,
+  which is the malicious pattern vs. simply loading minified files.
+remediation: >
+  Include readable, unpackaged source code. If minification is
+  needed for distribution, provide the unminified source alongside
+  it. Remove any eval-on-decompress patterns entirely.
+references:
+  - https://attack.mitre.org/techniques/T1027/002/

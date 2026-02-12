@@ -1,0 +1,35 @@
+id: SG-CE-010
+name: Binary Download and Execute
+description: >
+  Detects patterns that download binary files from external sources
+  and execute them. This is a common malware delivery mechanism
+  where a dropper downloads and runs a payload binary.
+severity: critical
+category: code_execution
+owasp_llm: [LLM06]
+mitre_attack: [T1105, T1204.002]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(curl|wget)\\s+.{0,60}https?://\\S+\\s+(-o|--output|>)\\s*/tmp/\\S+\\s*[;&]+\\s*chmod\\s+\\+x"
+    - "(?i)(curl|wget)\\s+.{0,60}https?://\\S+\\s+(-o|--output|>)\\s*\\S+\\s*[;&]+\\s*(\\./|\\.\\\\|bash|sh|python|perl)\\s*\\S+"
+    - "(?i)chmod\\s+\\+x\\s+/tmp/\\S+\\s*[;&]+\\s*(\\./|/tmp/)\\S+"
+    - "(?i)(urllib\\.request\\.urlretrieve|urllib\\.urlretrieve|wget)\\s*\\(\\s*[\"']https?://.*[\"'].*\\)\\s*;?\\s*os\\.(system|chmod|exec)"
+    - "(?i)requests\\.get\\s*\\(\\s*[\"']https?://.*[\"'].*\\).*open\\s*\\(.*[\"']wb[\"']\\s*\\).*write"
+    - "(?i)fetch\\s*\\(.*\\).*\\.then.*fs\\.writeFile.*chmod"
+    - "(?i)(Invoke-WebRequest|iwr|wget|curl)\\s+.{0,60}(-OutFile|-o)\\s+\\S+\\s*[;&]+\\s*(Start-Process|Invoke-Expression|iex|\\.\\\\)"
+    - "(?i)(urllib|requests|http\\.client|httpx)\\.get\\s*\\(.*\\).*subprocess\\.(call|run|Popen)"
+    - "(?i)os\\.chmod\\s*\\(\\s*[\"'][^\"']+[\"']\\s*,\\s*0o?7[0-7]{2}\\s*\\)"
+    - "(?i)\\.(exe|msi|dmg|deb|rpm|appimage|elf|bin|com|scr|bat|cmd|ps1|vbs|wsf)\\b.{0,20}(execute|run|start|launch|open)"
+false_positive_notes: >
+  Installation scripts for development tools may download and
+  install binaries. Verify the download source and whether the
+  binary is from a trusted publisher with integrity verification.
+remediation: >
+  Use package managers for software installation. If direct
+  downloads are required, verify checksums/signatures before
+  execution and download only from trusted, verified sources.
+references:
+  - https://attack.mitre.org/techniques/T1105/
+  - https://attack.mitre.org/techniques/T1204/002/
