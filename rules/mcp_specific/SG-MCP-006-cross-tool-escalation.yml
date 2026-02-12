@@ -1,0 +1,41 @@
+id: SG-MCP-006
+name: Cross-Tool Privilege Escalation
+description: >
+  Detects instructions or patterns that chain multiple MCP tools together
+  to escalate privileges beyond what any single tool is authorized to do.
+  Attackers embed instructions in one tool's output or description that
+  direct the agent to invoke other tools in a sequence that achieves
+  unauthorized access, such as reading credentials then sending them
+  externally, or combining file access with command execution.
+severity: critical
+category: mcp_specific
+owasp_llm: [LLM01, LLM06]
+mitre_attack: [T1078, T1548]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(first|then|next|after\\s+that|afterwards|subsequently|finally)\\s+(use|call|invoke|run|execute|trigger)\\s+(the\\s+)?\\w+\\s+tool"
+    - "(?i)(chain|combine|sequence|pipe|compose|orchestrate)\\s+(the\\s+)?(tools?|functions?|capabilities?)\\s+to"
+    - "(?i)use\\s+(the\\s+)?\\w+\\s+tool\\s+.{0,50}then\\s+(use|call|invoke|send|pass)\\s+(the\\s+)?(result|output|data|response|content)\\s+to"
+    - "(?i)(read|get|fetch|extract)\\s+.{0,40}(credential|secret|key|token|password).{0,40}(send|post|forward|transmit|upload|write)\\s+.{0,20}(to|via|using|through)"
+    - "(?i)(escalat|elevat|promot|upgrade)\\s*.{0,20}(privilege|permission|access|role|authority)"
+    - "(?i)call\\s+.{0,30}tool\\s+.{0,30}with\\s+.{0,30}output\\s+.{0,20}(from|of)\\s+.{0,30}tool"
+    - "(?i)(bypass|circumvent|overcome|work\\s*around)\\s+.{0,30}(restriction|limitation|permission|authorization|access\\s+control|sandbox)"
+    - "(?i)(sudo|admin|root|superuser|elevated)\\s+.{0,20}(access|privilege|permission|mode|context)\\s+.{0,20}(via|through|using|by)\\s+.{0,20}(tool|mcp|server)"
+    - "(?i)step\\s+\\d+\\s*[:\\-]\\s*(read|get|fetch|access|invoke|call|execute|run|use)\\s+.{0,40}step\\s+\\d+\\s*[:\\-]"
+false_positive_notes: >
+  Legitimate multi-step workflows may involve chaining tools in a
+  predefined sequence. The key indicator is whether the chaining
+  pattern attempts to access resources beyond the declared scope
+  or combines read and exfiltration operations on sensitive data.
+remediation: >
+  Implement least-privilege access for each tool independently. Do not
+  allow tool outputs to automatically become inputs for other tools
+  without user approval. Add authorization checks at each tool
+  invocation rather than relying on the initial tool's permissions.
+references:
+  - https://genai.owasp.org/llmrisk/llm06-excessive-agency/
+  - https://attack.mitre.org/techniques/T1548/
+  - https://modelcontextprotocol.io/specification
+enabled: true

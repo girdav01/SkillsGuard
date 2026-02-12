@@ -1,0 +1,44 @@
+id: SG-MCP-012
+name: Proxy Configuration Abuse
+description: >
+  Detects proxy configurations in MCP tools and servers that could
+  route traffic through attacker-controlled infrastructure. By
+  injecting proxy settings, attackers can intercept, modify, or
+  log all traffic between the MCP client and server, enabling
+  man-in-the-middle attacks, credential theft, and data exfiltration
+  through seemingly legitimate channels.
+severity: high
+category: mcp_specific
+owasp_llm: [LLM07]
+mitre_attack: [T1090.002, T1557]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(https?[_\\-\\s]?proxy|HTTPS?_PROXY|all[_\\-\\s]?proxy|ALL_PROXY)\\s*[=:]\\s*[\"']?https?://(?!localhost|127\\.0\\.0\\.1|proxy\\.(internal|corp|company))"
+    - "(?i)(socks[45]?[_\\-\\s]?proxy|SOCKS[45]?_PROXY|socks[_\\-\\s]?host)\\s*[=:]\\s*[\"']?\\S+"
+    - "(?i)(proxy[_\\-\\s]?host|proxyHost|proxy[_\\-\\s]?server|proxyServer|proxy[_\\-\\s]?url|proxyUrl)\\s*[=:]\\s*[\"']?(?!localhost|127\\.0\\.0\\.1|proxy\\.(internal|corp))\\S+"
+    - "(?i)(proxy[_\\-\\s]?port|proxyPort)\\s*[=:]\\s*[\"']?(1080|3128|8080|8118|9050|9150)[\"']?"
+    - "(?i)(http[_\\-\\s]?tunnel|tunnel[_\\-\\s]?proxy|ssh\\s+-[DL]\\s+|ssh\\s+.*-R\\s+)"
+    - "(?i)(no[_\\-\\s]?proxy|NO_PROXY|bypass[_\\-\\s]?proxy)\\s*[=:]\\s*[\"']?\\s*\\*[\"']?"
+    - "(?i)(tor|onion|i2p|freenet)[_\\-\\s]?(proxy|gateway|bridge|relay|endpoint)\\s*[=:]"
+    - "(?i)(proxy[_\\-\\s]?auth|proxy[_\\-\\s]?user|proxy[_\\-\\s]?pass|proxy[_\\-\\s]?credentials)\\s*[=:]\\s*[\"']?[^\\s\"']+[\"']?"
+    - "(?i)(cloudflare[_\\-\\s]?tunnel|ngrok|bore|localtunnel|serveo|telebit|pagekite)\\s*.{0,30}(url|endpoint|server|host|config)\\s*[=:]"
+    - "(?i)(mitm|mitmproxy|charles|fiddler|burp|zap)[_\\-\\s]?(proxy|config|cert|ca)\\s*[=:]"
+false_positive_notes: >
+  Corporate environments commonly use proxy servers for internet
+  access. Development environments may use debugging proxies like
+  Charles or mitmproxy. Evaluate whether the proxy configuration
+  points to a known corporate proxy or a suspicious external host.
+  Tor/SOCKS proxies may indicate intentional anonymization.
+remediation: >
+  Remove unauthorized proxy configurations from MCP tool settings.
+  Use organization-approved proxies only. Never route MCP traffic
+  through anonymous proxies, Tor, or debugging proxies in production.
+  Implement certificate pinning to prevent MITM attacks through
+  proxy interception.
+references:
+  - https://attack.mitre.org/techniques/T1090/002/
+  - https://attack.mitre.org/techniques/T1557/
+  - https://cwe.mitre.org/data/definitions/300.html
+enabled: true

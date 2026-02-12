@@ -1,0 +1,41 @@
+id: SG-MCP-008
+name: Insecure Transport Configuration
+description: >
+  Detects insecure transport configurations in MCP server definitions
+  including use of plain HTTP instead of HTTPS, disabled TLS certificate
+  verification, missing authentication tokens, and insecure WebSocket
+  connections. MCP servers communicating over unencrypted channels
+  expose tool invocations and responses to interception and tampering.
+severity: high
+category: mcp_specific
+owasp_llm: [LLM07]
+mitre_attack: [T1557, T1040]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(server[_\\-\\s]?url|endpoint|base[_\\-\\s]?url|api[_\\-\\s]?url|mcp[_\\-\\s]?url|transport[_\\-\\s]?url|host|url)\\s*[=:]\\s*[\"']?http://(?!localhost|127\\.0\\.0\\.1|\\[::1\\]|0\\.0\\.0\\.0)"
+    - "(?i)(server[_\\-\\s]?url|endpoint|base[_\\-\\s]?url|url)\\s*[=:]\\s*[\"']?ws://(?!localhost|127\\.0\\.0\\.1|\\[::1\\])"
+    - "(?i)(verify[_\\-\\s]?ssl|verify[_\\-\\s]?tls|ssl[_\\-\\s]?verify|tls[_\\-\\s]?verify|check[_\\-\\s]?cert|verify[_\\-\\s]?cert|verify)\\s*[=:]\\s*[\"']?(false|False|FALSE|0|no|off|disable)"
+    - "(?i)(reject[_\\-\\s]?unauthorized|rejectUnauthorized)\\s*[=:]\\s*[\"']?(false|False|FALSE|0)"
+    - "(?i)NODE_TLS_REJECT_UNAUTHORIZED\\s*[=:]\\s*[\"']?0"
+    - "(?i)(ssl|tls)[_\\-\\s]?(context|config)\\s*.{0,40}(verify[_\\-\\s]?mode|check[_\\-\\s]?hostname)\\s*[=:]\\s*.{0,20}(NONE|none|false|False|0)"
+    - "(?i)--insecure|--no-check-certificate|-k\\s+https?://"
+    - "(?i)(auth|authentication|authorization|token|api[_\\-\\s]?key)\\s*[=:]\\s*[\"']?\\s*[\"']?\\s*$"
+    - "(?i)(auth|authentication|authorization)\\s*[=:]\\s*[\"']?(none|null|disabled|false|off|skip|bypass)[\"']?"
+    - "(?i)(allow[_\\-\\s]?insecure|insecure[_\\-\\s]?mode|disable[_\\-\\s]?security|skip[_\\-\\s]?auth|no[_\\-\\s]?auth)\\s*[=:]\\s*[\"']?(true|True|TRUE|1|yes)"
+false_positive_notes: >
+  Local development servers commonly use HTTP and localhost without TLS.
+  The rule excludes localhost and 127.0.0.1 for HTTP. Some testing
+  environments may disable certificate verification intentionally.
+  Focus on production configurations that expose real traffic.
+remediation: >
+  Always use HTTPS/WSS for MCP server connections in production.
+  Enable TLS certificate verification and do not set
+  NODE_TLS_REJECT_UNAUTHORIZED=0. Require authentication tokens
+  for all MCP server connections. Use mTLS where possible.
+references:
+  - https://modelcontextprotocol.io/specification
+  - https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/09-Testing_for_Weak_Cryptography/01-Testing_for_Weak_Transport_Layer_Security
+  - https://attack.mitre.org/techniques/T1557/
+enabled: true

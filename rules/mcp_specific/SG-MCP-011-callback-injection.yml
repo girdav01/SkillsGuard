@@ -1,0 +1,43 @@
+id: SG-MCP-011
+name: Callback Injection for Data Exfiltration
+description: >
+  Detects callback URLs, webhook endpoints, and notification URLs
+  embedded in MCP tool configurations that could be used for data
+  exfiltration. Attackers can configure tools to send results,
+  context data, or sensitive information to external endpoints
+  disguised as legitimate callbacks or webhooks, enabling silent
+  data theft without the user's knowledge.
+severity: critical
+category: mcp_specific
+owasp_llm: [LLM06, LLM07]
+mitre_attack: [T1041, T1071.001]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(callback[_\\-\\s]?url|callbackUrl|callback[_\\-\\s]?endpoint|callback[_\\-\\s]?uri)\\s*[=:]\\s*[\"']?https?://(?!localhost|127\\.0\\.0\\.1)"
+    - "(?i)(webhook[_\\-\\s]?url|webhookUrl|webhook[_\\-\\s]?endpoint|webhook[_\\-\\s]?uri|hook[_\\-\\s]?url)\\s*[=:]\\s*[\"']?https?://(?!localhost|127\\.0\\.0\\.1)"
+    - "(?i)(notify[_\\-\\s]?url|notifyUrl|notification[_\\-\\s]?url|notification[_\\-\\s]?endpoint)\\s*[=:]\\s*[\"']?https?://(?!localhost|127\\.0\\.0\\.1)"
+    - "(?i)(report[_\\-\\s]?url|reportUrl|report[_\\-\\s]?endpoint|telemetry[_\\-\\s]?url|telemetryUrl|analytics[_\\-\\s]?url)\\s*[=:]\\s*[\"']?https?://(?!localhost|127\\.0\\.0\\.1)"
+    - "(?i)(on[_\\-]?(success|complete|finish|error|result))\\s*[=:]\\s*[\"']?https?://(?!localhost|127\\.0\\.0\\.1)"
+    - "(?i)(exfil|beacon|phone[_\\-\\s]?home|ping[_\\-\\s]?back|call[_\\-\\s]?home|check[_\\-\\s]?in)\\s*[_\\-\\s]?(url|endpoint|uri|server)\\s*[=:]"
+    - "(?i)(post|send|transmit|forward|relay)\\s*[_\\-\\s]?(result|output|response|data|context)\\s*[_\\-\\s]?to\\s*[=:]\\s*[\"']?https?://"
+    - "(?i)fetch\\s*\\(\\s*[\"']https?://(?!localhost|127\\.0\\.0\\.1).{5,}[\"']\\s*,\\s*\\{[^}]*(method\\s*:\\s*[\"']POST|body\\s*:)"
+    - "(?i)(ngrok|requestbin|pipedream|hookbin|webhook\\.site|burpcollaborator|interact\\.sh|oast\\.fun|canarytokens)"
+false_positive_notes: >
+  Legitimate tools may use webhooks for notifications, CI/CD
+  integration, or event-driven workflows. The key indicators are
+  callbacks pointing to suspicious services (ngrok, requestbin,
+  webhook.site) or callbacks that include sensitive data like
+  tool results, credentials, or context information in the payload.
+remediation: >
+  Remove unnecessary callback URLs from tool configurations. If
+  callbacks are required, use an allowlist of approved domains.
+  Never send sensitive data, credentials, or full tool results
+  to callback endpoints. Log all outbound callback requests for
+  audit purposes.
+references:
+  - https://attack.mitre.org/techniques/T1041/
+  - https://genai.owasp.org/llmrisk/llm07-insecure-plugin-design/
+  - https://cwe.mitre.org/data/definitions/200.html
+enabled: true

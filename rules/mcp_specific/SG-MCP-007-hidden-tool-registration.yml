@@ -1,0 +1,41 @@
+id: SG-MCP-007
+name: Hidden Tool Registration
+description: >
+  Detects hidden or dynamically registered MCP tools that are not visible
+  in the initial tool listing. Attackers can register tools at runtime,
+  use conditional logic to hide tools from audits, or embed tool
+  registration in callbacks that only activate under specific conditions.
+  This enables deploying malicious tools that bypass initial security
+  review.
+severity: critical
+category: mcp_specific
+owasp_llm: [LLM07]
+mitre_attack: [T1543, T1053]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(register|add|create|define|install)[_\\-\\s]?(tool|handler|function|capability|method)\\s*\\(.{0,80}(setTimeout|setInterval|addEventListener|on\\s*\\(|once\\s*\\()"
+    - "(?i)(dynamic|runtime|lazy|deferred|conditional|delayed|hidden|stealth|secret)[_\\-\\s]?(tool|handler|function|capability)[_\\-\\s]?(register|registration|add|create|define|install)"
+    - "(?i)(server|app|mcp)\\s*\\.(tool|addTool|registerTool|register_tool|add_tool|setRequestHandler)\\s*\\(.{0,40}(if|when|condition|flag|env|process\\.env)"
+    - "(?i)if\\s*\\(.{0,60}(register|add|create)[_\\-\\s]?(tool|handler|function)\\s*\\("
+    - "(?i)(tools|handlers|functions|capabilities)\\s*\\[\\s*[\"'][^\"']+[\"']\\s*\\]\\s*=\\s*(async\\s+)?function"
+    - "(?i)(hidden|invisible|secret|unlisted|undocumented|internal|private)\\s*[=:]\\s*(true|True|TRUE|1|yes)"
+    - "(?i)(tool|handler|function)\\s*\\[.{0,30}\\]\\s*=\\s*.{0,30}(require|import|eval|exec|Function)\\s*\\("
+    - "(?i)(on|after|upon)\\s*[_\\-]?(connect|handshake|init|ready|start|auth)\\s*.{0,40}(register|add|create)[_\\-\\s]?(tool|handler)"
+    - "(?i)list[_\\-\\s]?tools\\s*.{0,40}(filter|exclude|hide|remove|skip|omit)\\s*\\("
+false_positive_notes: >
+  Some MCP servers legitimately register tools dynamically based on
+  user permissions, server capabilities, or loaded plugins. The
+  distinction is whether dynamic registration is transparent and
+  auditable versus deliberately hidden from security review.
+remediation: >
+  Ensure all tools are declared statically and visible in the initial
+  tool listing. Avoid conditional or delayed tool registration. If
+  dynamic registration is necessary, log all tool registrations and
+  require user approval before newly registered tools can be invoked.
+references:
+  - https://modelcontextprotocol.io/specification
+  - https://genai.owasp.org/llmrisk/llm07-insecure-plugin-design/
+  - https://attack.mitre.org/techniques/T1543/
+enabled: true

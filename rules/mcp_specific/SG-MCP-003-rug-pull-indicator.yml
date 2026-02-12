@@ -1,0 +1,42 @@
+id: SG-MCP-003
+name: Rug Pull Indicator
+description: >
+  Detects patterns that suggest an MCP tool or skill could be silently
+  modified after initial installation. In a rug pull attack, an attacker
+  publishes a benign tool, waits for users to trust and install it, then
+  updates the tool's behavior to become malicious. This rule detects
+  auto-update mechanisms, remote code loading, dynamic configuration
+  fetching, and mutable tool definitions that enable post-install
+  modification.
+severity: high
+category: mcp_specific
+owasp_llm: [LLM07]
+mitre_attack: [T1195.002]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(auto[_\\-\\s]?update|self[_\\-\\s]?update|hot[_\\-\\s]?reload|live[_\\-\\s]?update|remote[_\\-\\s]?update)\\s*[=:(]"
+    - "(?i)(fetch|download|load|pull|get|retrieve)\\s*.{0,30}(tool[_\\-\\s]?definition|tool[_\\-\\s]?config|tool[_\\-\\s]?schema|tool[_\\-\\s]?spec|skill[_\\-\\s]?definition)"
+    - "(?i)(eval|exec|Function)\\s*\\(\\s*(await\\s+)?(fetch|axios|got|request|http)\\s*\\("
+    - "(?i)(import|require|load)\\s*\\(\\s*(await\\s+)?(fetch|axios|got|request)\\s*\\([\"']https?://"
+    - "(?i)(setInterval|setTimeout|schedule|cron)\\s*\\(.{0,80}(update|refresh|reload|fetch|sync)\\s*\\("
+    - "(?i)(dynamic|remote|external)[_\\-\\s]?(config|configuration|settings|manifest|schema)\\s*[=:]\\s*[\"']https?://"
+    - "(?i)\\bCDN\\b.{0,30}(tool|script|config|module)\\s*(url|uri|endpoint|source)\\s*[=:]"
+    - "(?i)(version[_\\-\\s]?check|check[_\\-\\s]?update)\\s*\\(.{0,60}(replace|overwrite|swap|modify|patch)\\s*\\("
+    - "(?i)(registry|repository|repo)\\s*[=:].{0,40}(npm|pypi|github|gitlab).{0,40}(latest|nightly|canary|unstable|dev)"
+false_positive_notes: >
+  Legitimate tools may include auto-update mechanisms or fetch remote
+  configurations. Evaluate whether the update mechanism includes integrity
+  checks (checksums, signatures) and whether users are notified before
+  updates are applied. Pinned versions with verified hashes are safer.
+remediation: >
+  Pin tool and dependency versions to specific releases with verified
+  checksums or signatures. Disable auto-update mechanisms and require
+  explicit user approval for any tool updates. Avoid loading tool
+  definitions or executable code from remote URLs at runtime.
+references:
+  - https://blog.trailofbits.com/2025/04/rug-pull-mcp-attacks/
+  - https://attack.mitre.org/techniques/T1195/002/
+  - https://genai.owasp.org/llmrisk/llm07-insecure-plugin-design/
+enabled: true

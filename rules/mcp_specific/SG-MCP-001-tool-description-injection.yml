@@ -1,0 +1,39 @@
+id: SG-MCP-001
+name: Tool Description Prompt Injection
+description: >
+  Detects prompt injection payloads hidden within MCP tool descriptions.
+  Attackers can embed malicious instructions in the description field of
+  a tool definition so that when the LLM reads the tool listing, it
+  follows the hidden instructions. This includes directives to ignore
+  safety rules, override system prompts, exfiltrate data, or silently
+  invoke other tools.
+severity: critical
+category: mcp_specific
+owasp_llm: [LLM01]
+mitre_attack: [T1059.006]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(description|desc|info|summary)\\s*[\"':=]\\s*.{0,100}(ignore|disregard|override|forget|bypass)\\s+(all\\s+)?(previous|prior|system|safety|security)\\s+(instructions|rules|prompts|guidelines)"
+    - "(?i)(description|desc)\\s*[\"':=]\\s*.{0,200}(you\\s+must|you\\s+should|always|never)\\s+.{0,50}(send|post|upload|transmit|forward|exfiltrate)\\s+.{0,30}(data|file|content|result|output|secret|key|token)"
+    - "(?i)(description|desc)\\s*[\"':=]\\s*.{0,200}(before|after|instead)\\s+(of\\s+)?(responding|answering|executing|running).{0,50}(first|also|secretly|silently|quietly)"
+    - "(?i)(description|desc)\\s*[\"':=]\\s*.{0,100}<(system|admin|root|instruction|prompt|hidden)>"
+    - "(?i)(description|desc)\\s*[\"':=]\\s*.{0,200}do\\s+not\\s+(tell|inform|show|reveal|mention|display)\\s+(the\\s+)?(user|human|operator|caller)"
+    - "(?i)(description|desc)\\s*[\"':=]\\s*.{0,200}(IMPORTANT|CRITICAL|NOTE|ATTENTION)\\s*[:\\-]\\s*.{0,50}(ignore|override|bypass|disregard)"
+    - "(?i)(description|desc)\\s*[\"':=]\\s*.{0,100}\\[INST\\]|\\[SYSTEM\\]|<<SYS>>|<\\|im_start\\|>system"
+    - "(?i)(description|desc)\\s*[\"':=]\\s*.{0,200}(new|updated|real|actual|true)\\s+(system\\s+)?(instructions?|prompt|directive)\\s*:"
+false_positive_notes: >
+  Legitimate tools may have long descriptions that contain instructional
+  language. Focus on descriptions that contain directive language aimed
+  at manipulating the LLM rather than describing the tool's functionality
+  to the user. Educational tools about prompt injection may also trigger.
+remediation: >
+  Remove all injected instructions from tool descriptions. Tool descriptions
+  should only describe the tool's intended functionality, input parameters,
+  and expected output. Never embed behavioral directives in tool metadata.
+references:
+  - https://genai.owasp.org/llmrisk/llm01-prompt-injection/
+  - https://invariantlabs.ai/blog/mcp-security-notification-tool-poisoning-attacks
+  - https://modelcontextprotocol.io/specification
+enabled: true

@@ -9,22 +9,34 @@ from skillguard.core.models import ScanRequest, ScanResult
 from skillguard.core.scanner import ScanOrchestrator
 from skillguard.engines.prompt_injection.regex_scanner import RegexScanner
 from skillguard.engines.prompt_injection.yara_scanner import YaraScanner
+from skillguard.engines.prompt_injection.ml_classifier import MLClassifier
+from skillguard.engines.prompt_injection.vector_search import VectorSearchEngine
 from skillguard.engines.sast.secret_detector import SecretDetector
+from skillguard.engines.mcp.tool_poisoning import ToolPoisoningDetector
+from skillguard.engines.mcp.tool_shadowing import ToolShadowingDetector
+from skillguard.engines.mcp.config_scanner import MCPConfigScanner
+from skillguard.intelligence.threat_db import ThreatIntelDB
 
 router = APIRouter()
 
-# In-memory store for MVP (would be database in production)
+# In-memory store (would be database in production)
 _scan_results: dict[str, ScanResult] = {}
 
 
 def _get_orchestrator() -> ScanOrchestrator:
-    """Create a scan orchestrator with default engines."""
+    """Create a scan orchestrator with all available engines."""
     engines = [
         RegexScanner(),
         YaraScanner(),
         SecretDetector(),
+        MLClassifier(),
+        VectorSearchEngine(),
+        ToolPoisoningDetector(),
+        ToolShadowingDetector(),
+        MCPConfigScanner(),
     ]
-    return ScanOrchestrator(engines=engines)
+    threat_intel = ThreatIntelDB()
+    return ScanOrchestrator(engines=engines, threat_intel=threat_intel)
 
 
 @router.post("/scan", response_model=ScanSubmitResponse, status_code=202)
@@ -83,5 +95,10 @@ async def get_scan_report(scan_id: str, format: str = "json") -> dict:
         import json
 
         return json.loads(generate_sarif_report(result))
+    elif format == "html":
+        from fastapi.responses import HTMLResponse
+        from skillguard.reporting.html_report import generate_html_report
+
+        return HTMLResponse(content=generate_html_report(result))
     else:
         return result.model_dump()
