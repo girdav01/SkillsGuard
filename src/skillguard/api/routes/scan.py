@@ -15,6 +15,10 @@ from skillguard.engines.sast.secret_detector import SecretDetector
 from skillguard.engines.mcp.tool_poisoning import ToolPoisoningDetector
 from skillguard.engines.mcp.tool_shadowing import ToolShadowingDetector
 from skillguard.engines.mcp.config_scanner import MCPConfigScanner
+from skillguard.engines.sandbox.behavior_analyzer import BehaviorAnalyzer
+from skillguard.engines.structural.schema_validator import SchemaValidator
+from skillguard.engines.structural.permission_analyzer import PermissionAnalyzer
+from skillguard.engines.structural.obfuscation_detector import ObfuscationDetector
 from skillguard.intelligence.threat_db import ThreatIntelDB
 
 router = APIRouter()
@@ -34,6 +38,10 @@ def _get_orchestrator() -> ScanOrchestrator:
         ToolPoisoningDetector(),
         ToolShadowingDetector(),
         MCPConfigScanner(),
+        BehaviorAnalyzer(),
+        SchemaValidator(),
+        PermissionAnalyzer(),
+        ObfuscationDetector(),
     ]
     threat_intel = ThreatIntelDB()
     return ScanOrchestrator(engines=engines, threat_intel=threat_intel)
