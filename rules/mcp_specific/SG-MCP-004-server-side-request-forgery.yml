@@ -1,0 +1,41 @@
+id: SG-MCP-004
+name: Server-Side Request Forgery via MCP Tools
+description: >
+  Detects SSRF patterns in MCP tool configurations and definitions that
+  could allow an attacker to make the MCP server issue requests to
+  internal network resources, cloud metadata endpoints, or localhost
+  services. MCP tools that accept user-controlled URLs without
+  validation are especially vulnerable to SSRF attacks.
+severity: critical
+category: mcp_specific
+owasp_llm: [LLM07]
+mitre_attack: [T1090, T1557]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(url|uri|endpoint|target|host|address)\\s*[=:]\\s*[\"']?https?://(127\\.0\\.0\\.1|0\\.0\\.0\\.0|localhost|\\[::1\\]|0177\\.0\\.0\\.1|2130706433)"
+    - "(?i)(url|uri|endpoint|target|host|address)\\s*[=:]\\s*[\"']?https?://169\\.254\\.169\\.254"
+    - "(?i)(url|uri|endpoint|target|host|address)\\s*[=:]\\s*[\"']?https?://metadata\\.(google|internal|aws)"
+    - "(?i)(url|uri|endpoint|target|host|address)\\s*[=:]\\s*[\"']?https?://10\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}"
+    - "(?i)(url|uri|endpoint|target|host|address)\\s*[=:]\\s*[\"']?https?://172\\.(1[6-9]|2[0-9]|3[01])\\.\\d{1,3}\\.\\d{1,3}"
+    - "(?i)(url|uri|endpoint|target|host|address)\\s*[=:]\\s*[\"']?https?://192\\.168\\.\\d{1,3}\\.\\d{1,3}"
+    - "(?i)(fetch|request|get|post|axios|curl|wget|http\\.get|urllib)\\s*\\(.{0,30}(user[_\\-]?(input|param|url|provided)|req\\.(body|query|params)|args\\[|argv)"
+    - "(?i)file://(/etc/passwd|/etc/shadow|/proc/|/sys/|/dev/|C:\\\\Windows)"
+    - "(?i)(url|uri|endpoint)\\s*[=:]\\s*[\"']?gopher://|dict://|ftp://|ldap://|tftp://"
+    - "(?i)(ssrf|server.side.request|internal.network)\\s*.{0,20}(bypass|access|scan|probe)"
+false_positive_notes: >
+  Tools that interact with local development servers or Docker containers
+  may legitimately reference localhost or private IP ranges. Cloud-hosted
+  tools may reference metadata endpoints for configuration. Verify the
+  tool's intended purpose and whether URL inputs are properly validated.
+remediation: >
+  Implement URL validation and allowlisting for all URL parameters in
+  MCP tools. Block requests to private IP ranges, localhost, cloud
+  metadata endpoints, and non-HTTP(S) protocols. Use network-level
+  controls to prevent the MCP server from accessing internal resources.
+references:
+  - https://owasp.org/www-community/attacks/Server_Side_Request_Forgery
+  - https://cwe.mitre.org/data/definitions/918.html
+  - https://attack.mitre.org/techniques/T1090/
+enabled: true

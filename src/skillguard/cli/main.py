@@ -27,7 +27,7 @@ def cli() -> None:
 @click.option(
     "--format",
     "output_format",
-    type=click.Choice(["rich", "json", "sarif"]),
+    type=click.Choice(["rich", "json", "sarif", "html"]),
     default="rich",
     help="Output format.",
 )
@@ -90,6 +90,13 @@ def scan(
             click.echo(f"SARIF report written to {output_file}")
         else:
             click.echo(report)
+    elif output_format == "html":
+        from skillguard.reporting.html_report import generate_html_report
+
+        report = generate_html_report(result)
+        out = output_file or "skillguard-report.html"
+        Path(out).write_text(report, encoding="utf-8")
+        click.echo(f"HTML report written to {out}")
     else:
         print_scan_result(result)
         if output_file:
@@ -114,10 +121,60 @@ def scan(
 
 @cli.command()
 @click.argument("path", type=click.Path(exists=True))
-def monitor(path: str) -> None:
+@click.option("--interval", default=5.0, help="Poll interval in seconds (fallback mode).")
+def monitor(path: str, interval: float) -> None:
     """Monitor a skills directory for changes and auto-rescan."""
-    click.echo(f"Monitoring {path} for changes... (Ctrl+C to stop)")
-    click.echo("(File watcher will be implemented in Phase 2)")
+    from skillguard.monitoring.file_watcher import SkillDirectoryWatcher
+
+    watcher = SkillDirectoryWatcher()
+    if not watcher.watch(path):
+        print_error(f"Cannot watch directory: {path}")
+        sys.exit(1)
+
+    mode = "watchdog" if watcher.is_available else "polling"
+    click.echo(f"Monitoring {path} for changes ({mode} mode)... (Ctrl+C to stop)")
+
+    async def _monitor_loop() -> None:
+        from skillguard.monitoring.drift_detector import DriftDetector
+
+        detector = DriftDetector()
+        await detector.capture_baseline(path)
+        click.echo("Baseline captured.")
+
+        try:
+            while True:
+                if watcher.is_available:
+                    changes = await watcher.get_changes()
+                else:
+                    changes = await watcher.poll_once()
+
+                if changes:
+                    click.echo(f"\nDetected {len(changes)} change(s):")
+                    for file_path, event_type in changes[:10]:
+                        click.echo(f"  [{event_type}] {file_path}")
+
+                    drift = await detector.check_drift(path)
+                    if drift.has_drift:
+                        click.echo("\n  DRIFT DETECTED - re-scanning...")
+                        request = ScanRequest(skill_path=path)
+                        result = await _run_scan(request)
+                        print_scan_result(result)
+                        await detector.capture_baseline(
+                            path,
+                            verdict=result.verdict if isinstance(result.verdict, str) else result.verdict.value,
+                            score=result.composite_score,
+                        )
+
+                await asyncio.sleep(interval)
+        except KeyboardInterrupt:
+            click.echo("\nStopping monitor...")
+        finally:
+            watcher.stop()
+
+    try:
+        asyncio.run(_monitor_loop())
+    except KeyboardInterrupt:
+        pass
 
 
 @cli.command("rules")
@@ -162,17 +219,37 @@ def server() -> None:
 
 
 async def _run_scan(request: ScanRequest, rules_dir: str | None = None) -> "ScanResult":
-    """Run a scan using the orchestrator."""
+    """Run a scan using the orchestrator with all available engines."""
     from skillguard.core.scanner import ScanOrchestrator
     from skillguard.engines.prompt_injection.regex_scanner import RegexScanner
     from skillguard.engines.prompt_injection.yara_scanner import YaraScanner
+    from skillguard.engines.prompt_injection.ml_classifier import MLClassifier
+    from skillguard.engines.prompt_injection.vector_search import VectorSearchEngine
     from skillguard.engines.sast.secret_detector import SecretDetector
+    from skillguard.engines.mcp.tool_poisoning import ToolPoisoningDetector
+    from skillguard.engines.mcp.tool_shadowing import ToolShadowingDetector
+    from skillguard.engines.mcp.config_scanner import MCPConfigScanner
+    from skillguard.engines.sandbox.behavior_analyzer import BehaviorAnalyzer
+    from skillguard.engines.structural.schema_validator import SchemaValidator
+    from skillguard.engines.structural.permission_analyzer import PermissionAnalyzer
+    from skillguard.engines.structural.obfuscation_detector import ObfuscationDetector
+    from skillguard.intelligence.threat_db import ThreatIntelDB
 
     engines = [
         RegexScanner(rules_dir=rules_dir),
         YaraScanner(),
         SecretDetector(),
+        MLClassifier(),
+        VectorSearchEngine(),
+        ToolPoisoningDetector(),
+        ToolShadowingDetector(),
+        MCPConfigScanner(),
+        BehaviorAnalyzer(),
+        SchemaValidator(),
+        PermissionAnalyzer(),
+        ObfuscationDetector(),
     ]
 
-    orchestrator = ScanOrchestrator(engines=engines)
+    threat_intel = ThreatIntelDB()
+    orchestrator = ScanOrchestrator(engines=engines, threat_intel=threat_intel)
     return await orchestrator.scan(request)

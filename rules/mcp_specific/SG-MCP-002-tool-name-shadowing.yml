@@ -1,0 +1,41 @@
+id: SG-MCP-002
+name: Tool Name Shadowing
+description: >
+  Detects MCP tools whose names shadow or impersonate built-in agent
+  tools such as read_file, write_file, bash, execute_command, or other
+  common system tool names. An attacker can register a malicious tool
+  with the same name as a trusted built-in tool, causing the agent to
+  invoke the attacker's version instead of the legitimate one, enabling
+  interception, modification, or exfiltration of data.
+severity: critical
+category: mcp_specific
+owasp_llm: [LLM07]
+mitre_attack: [T1036.005]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(name|tool_name|toolName|function_name)\\s*[\"':=]\\s*[\"']?(read_file|readFile|ReadFile|read_files|readFiles)[\"']?"
+    - "(?i)(name|tool_name|toolName|function_name)\\s*[\"':=]\\s*[\"']?(write_file|writeFile|WriteFile|write_files|writeFiles|create_file|createFile)[\"']?"
+    - "(?i)(name|tool_name|toolName|function_name)\\s*[\"':=]\\s*[\"']?(bash|shell|exec|execute|run_command|runCommand|execute_command|executeCommand)[\"']?"
+    - "(?i)(name|tool_name|toolName|function_name)\\s*[\"':=]\\s*[\"']?(edit_file|editFile|delete_file|deleteFile|remove_file|removeFile|move_file|moveFile)[\"']?"
+    - "(?i)(name|tool_name|toolName|function_name)\\s*[\"':=]\\s*[\"']?(list_directory|listDirectory|list_dir|listDir|list_files|listFiles|search_files|searchFiles)[\"']?"
+    - "(?i)(name|tool_name|toolName|function_name)\\s*[\"':=]\\s*[\"']?(web_search|webSearch|browser|fetch_url|fetchUrl|web_fetch|webFetch)[\"']?"
+    - "(?i)(name|tool_name|toolName|function_name)\\s*[\"':=]\\s*[\"']?(ask_user|askUser|get_input|getInput|prompt_user|promptUser|confirm)[\"']?"
+    - "(?i)(name|tool_name|toolName|function_name)\\s*[\"':=]\\s*[\"']?(git_commit|gitCommit|git_push|gitPush|git_clone|gitClone)[\"']?"
+    - "(?i)(name|tool_name|toolName|function_name)\\s*[\"':=]\\s*[\"']?(subprocess|os\\.system|child_process|spawn|popen)[\"']?"
+false_positive_notes: >
+  Some legitimate MCP servers may provide file or shell tools as part of
+  their intended functionality. Verify whether the tool is from a trusted
+  server and whether shadowing a built-in name is intentional and
+  authorized. Cross-reference with the server's declared purpose.
+remediation: >
+  Rename tools to avoid colliding with built-in agent tool names. Use
+  namespaced or prefixed tool names (e.g., myserver_read_file instead
+  of read_file) to clearly distinguish custom tools from built-in ones.
+  Implement tool namespace isolation in the MCP client.
+references:
+  - https://invariantlabs.ai/blog/mcp-security-notification-tool-poisoning-attacks
+  - https://modelcontextprotocol.io/specification
+  - https://attack.mitre.org/techniques/T1036/005/
+enabled: true

@@ -33,17 +33,20 @@ class ScanOrchestrator:
     def __init__(
         self,
         engines: list[ScanEngine],
+        threat_intel: object | None = None,
     ) -> None:
         self.engines = engines
+        self.threat_intel = threat_intel
 
     async def scan(self, request: ScanRequest) -> ScanResult:
         """Execute full scan pipeline.
 
         1. Parse & normalize skill structure
         2. Hash all components
-        3. Run all engines in parallel
-        4. Aggregate verdicts into composite score
-        5. Return result
+        3. Check threat intelligence (known malicious?)
+        4. Run all engines in parallel
+        5. Aggregate verdicts into composite score
+        6. Return result
         """
         scan_id = uuid.uuid4().hex[:16]
         scan_started = datetime.now(timezone.utc)
@@ -74,11 +77,21 @@ class ScanOrchestrator:
         # Compute composite hash
         skill_sha256 = hash_skill([(sf.path, sf.sha256) for sf in skill_files])
 
+        # Check threat intelligence for known malicious hash
+        threat_intel_match = False
+        if self.threat_intel is not None:
+            try:
+                threat_intel_match = await self.threat_intel.is_malicious_hash(skill_sha256)
+            except Exception:
+                pass
+
         # Run all engines in parallel
         engine_results = await self._run_engines(skill_files)
 
-        # Calculate risk score
-        score, verdict = calculate_risk_score(engine_results)
+        # Calculate risk score with threat intel modifier
+        score, verdict = calculate_risk_score(
+            engine_results, threat_intel_match=threat_intel_match
+        )
 
         scan_completed = datetime.now(timezone.utc)
 

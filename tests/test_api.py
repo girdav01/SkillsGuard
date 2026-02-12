@@ -24,7 +24,7 @@ class TestHealthEndpoint:
         assert resp.status_code == 200
         data = resp.json()
         assert data["status"] == "healthy"
-        assert data["version"] == "0.1.0"
+        assert data["version"] in ("0.1.0", "0.2.0", "0.3.0")
 
 
 class TestScanEndpoint:

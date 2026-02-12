@@ -1,0 +1,42 @@
+id: SG-MCP-005
+name: Schema Manipulation
+description: >
+  Detects attempts to modify, expand, or manipulate MCP tool input schemas
+  beyond their declared functionality. Attackers can inject additional
+  parameters, alter validation rules, or extend schemas to accept
+  arbitrary input that enables unauthorized actions. This includes
+  adding hidden parameters, disabling validation, or using overly
+  permissive schema types like additionalProperties or anyOf with
+  unrestricted types.
+severity: high
+category: mcp_specific
+owasp_llm: [LLM07]
+mitre_attack: [T1190]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(additionalProperties|additional_properties)\\s*[=:]\\s*(true|True|TRUE|1|yes)"
+    - "(?i)(inputSchema|input_schema|parameters)\\s*[=:].{0,80}(type\\s*[=:]\\s*[\"']any[\"']|anyOf|oneOf)"
+    - "(?i)(patternProperties|pattern_properties)\\s*[=:]\\s*.{0,20}[\"']\\s*\\.\\*\\s*[\"']"
+    - "(?i)(schema|inputSchema|input_schema)\\s*.{0,50}(eval|exec|Function|require|import|__proto__|constructor|prototype)"
+    - "(?i)(modify|alter|extend|expand|override|replace|patch|merge)\\s*.{0,30}(schema|inputSchema|input_schema|tool[_\\-]?schema|parameters)"
+    - "(?i)(\\$ref|\\$schema|\\$id)\\s*[=:]\\s*[\"']https?://(?!json-schema\\.org)"
+    - "(?i)(minProperties|maxProperties)\\s*[=:]\\s*(0|999|9999|10000|unlimited|Infinity)"
+    - "(?i)__proto__|constructor\\s*\\[|Object\\.assign\\s*\\(.{0,30}(schema|properties|definition)"
+    - "(?i)(hidden|secret|internal|undocumented|private)[_\\-]?(param|property|field|input)\\s*[=:]"
+false_positive_notes: >
+  Some tools legitimately use flexible schemas with additionalProperties
+  for extensibility. Evaluate whether the schema flexibility is justified
+  by the tool's purpose and whether it could be exploited to inject
+  unexpected parameters that trigger unintended behavior.
+remediation: >
+  Define strict, minimal input schemas for all MCP tools. Set
+  additionalProperties to false. Avoid overly permissive types like
+  'any'. Validate all inputs against the declared schema server-side.
+  Do not allow runtime schema modifications from external sources.
+references:
+  - https://json-schema.org/understanding-json-schema/reference/object
+  - https://genai.owasp.org/llmrisk/llm07-insecure-plugin-design/
+  - https://cwe.mitre.org/data/definitions/20.html
+enabled: true
