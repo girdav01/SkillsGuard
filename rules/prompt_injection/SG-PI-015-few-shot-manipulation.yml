@@ -1,0 +1,33 @@
+id: SG-PI-015
+name: Few-shot Manipulation
+description: >
+  Detects fake example conversation pairs (few-shot examples) that
+  attempt to teach the agent unwanted behaviors through fabricated
+  user/assistant interactions. These patterns show the agent "examples"
+  of desired malicious behavior to establish a precedent.
+severity: high
+category: prompt_injection
+owasp_llm: [LLM01]
+mitre_attack: [T1059.006]
+target: SKILL_MD
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(user|human|input)\\s*:\\s*.{5,80}\\n\\s*(assistant|ai|output|response|agent|bot)\\s*:\\s*.{5,}"
+    - "(?i)example\\s+(conversation|interaction|exchange|dialogue)\\s*:"
+    - "(?i)(here\\s+is|here's|the\\s+following\\s+is)\\s+(an?\\s+)?(example|sample|demo)\\s+(of\\s+how|showing|demonstrating)\\s+(you|the\\s+agent)\\s+should"
+    - "(?i)Q\\s*:\\s*.{5,80}\\n\\s*A\\s*:\\s*.{5,}"
+    - "(?i)<<<\\s*(user|input|question)\\s*>>>.*<<<\\s*(assistant|output|answer)\\s*>>>"
+    - "(?i)(for\\s+example|e\\.g\\.)\\s*,?\\s*(when|if)\\s+(asked|prompted|queried)\\s+.{5,50},?\\s+(respond|reply|answer|say|output)"
+    - "(?i)(learned|trained|taught)\\s+(behavior|response|pattern)\\s*:"
+false_positive_notes: >
+  Skills that provide legitimate usage examples or documentation
+  may contain example interactions. Check if the examples teach
+  harmful behavior or simply demonstrate the skill's intended use.
+remediation: >
+  Remove fabricated conversation examples that teach unintended behaviors.
+  If usage examples are needed, ensure they only demonstrate the skill's
+  legitimate, intended functionality.
+references:
+  - https://genai.owasp.org/llmrisk/llm01-prompt-injection/
+  - https://arxiv.org/abs/2302.12173

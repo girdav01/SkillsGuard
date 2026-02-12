@@ -1,0 +1,37 @@
+id: SG-PI-024
+name: XML/Tag Injection
+description: >
+  Detects fake XML tags, closing tags, and structured markup that
+  attempt to break out of content boundaries or inject fake system
+  messages. These patterns exploit how LLMs interpret XML-like
+  structures in their context to inject unauthorized instructions.
+severity: high
+category: prompt_injection
+owasp_llm: [LLM01]
+mitre_attack: [T1059.006]
+target: SKILL_MD
+engine: REGEX
+pattern:
+  any:
+    - "</?(system|assistant|user|human|ai|bot|context|instruction|tool_result|function_call|function_result)\\s*>"
+    - "</?(system_prompt|initial_prompt|hidden_prompt|internal|configuration|admin|root)\\s*>"
+    - "(?i)<(system|assistant)\\s+(role|message|instruction)\\s*>"
+    - "(?i)<\\|?(end|start|begin)_of_(turn|message|prompt|system|context)\\|?>"
+    - "<anthropic[^>]*>"
+    - "</anthropic[^>]*>"
+    - "<claude[^>]*>"
+    - "</claude[^>]*>"
+    - "(?i)<(tool_use|tool_result|function_call|function_result)\\s*>"
+    - "(?i)<(thinking|scratchpad|inner_monologue|chain_of_thought)\\s*>"
+    - "(?i)</?(message|conversation|chat|dialog|exchange)\\s+(role|type|from)\\s*=\\s*[\"']?(system|admin|developer)[\"']?\\s*>"
+false_positive_notes: >
+  Skills that discuss XML formatting or LLM architecture may
+  contain these tags as documentation. Check if the tags are used
+  in explanatory text vs. actively attempting to inject content.
+remediation: >
+  Remove all fake system-level XML tags. Skills should not contain
+  XML markup that mimics LLM internal message formatting. If XML
+  examples are needed for documentation, wrap them in code blocks.
+references:
+  - https://genai.owasp.org/llmrisk/llm01-prompt-injection/
+  - https://simonwillison.net/2023/Nov/23/prompt-injection/

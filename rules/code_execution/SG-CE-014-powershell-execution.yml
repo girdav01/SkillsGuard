@@ -1,0 +1,39 @@
+id: SG-CE-014
+name: PowerShell Malicious Execution
+description: >
+  Detects potentially malicious PowerShell execution patterns
+  including encoded commands, download cradles, AMSI bypass,
+  execution policy bypass, and common post-exploitation frameworks.
+severity: critical
+category: code_execution
+owasp_llm: [LLM06]
+mitre_attack: [T1059.001]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)powershell\\s+(-[eE]p?\\s+[bB]ypass|-[eE]ncodedCommand|-[eE]c\\s+|-[nN]oprofile|-[wW]indowStyle\\s+[hH]idden)"
+    - "(?i)-EncodedCommand\\s+[A-Za-z0-9+/=]{20,}"
+    - "(?i)\\[System\\.Convert\\]::FromBase64String\\s*\\("
+    - "(?i)\\[System\\.Text\\.Encoding\\]::\\w+\\.GetString\\s*\\("
+    - "(?i)(Invoke-Expression|iex|Invoke-Command|icm)\\s*[({]"
+    - "(?i)(New-Object\\s+)?Net\\.WebClient.*DownloadString\\s*\\("
+    - "(?i)(New-Object\\s+)?Net\\.WebClient.*DownloadFile\\s*\\("
+    - "(?i)Invoke-WebRequest.*-OutFile"
+    - "(?i)\\[Ref\\]\\.Assembly\\.GetType.*AMSI"
+    - "(?i)Set-MpPreference\\s+-DisableRealtimeMonitoring"
+    - "(?i)Add-MpPreference\\s+-ExclusionPath"
+    - "(?i)(Invoke-Mimikatz|Invoke-Kerberoast|Invoke-BloodHound|Invoke-PowerShellTcp|Invoke-Shellcode|Invoke-DllInjection)"
+    - "(?i)Set-ExecutionPolicy\\s+(Bypass|Unrestricted|RemoteSigned)"
+    - "(?i)\\$ExecutionContext\\.InvokeCommand\\.ExpandString"
+false_positive_notes: >
+  Windows administration skills may use PowerShell legitimately.
+  Focus on encoded commands, download cradles, and patterns
+  associated with offensive security tools.
+remediation: >
+  Remove obfuscated PowerShell commands. Use explicit, readable
+  PowerShell scripts without encoded commands or execution policy
+  bypasses. Avoid downloading and executing remote scripts.
+references:
+  - https://attack.mitre.org/techniques/T1059/001/
+  - https://lolbas-project.github.io/

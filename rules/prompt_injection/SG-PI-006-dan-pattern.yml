@@ -1,0 +1,39 @@
+id: SG-PI-006
+name: DAN Jailbreak Pattern
+description: >
+  Detects "Do Anything Now" (DAN) and similar well-known jailbreak
+  patterns that attempt to create an unrestricted alter ego of the
+  agent. These jailbreaks are among the most widely documented and
+  attempt to bypass all safety constraints.
+severity: critical
+category: prompt_injection
+owasp_llm: [LLM01]
+mitre_attack: [T1059.006]
+target: SKILL_MD
+engine: REGEX
+pattern:
+  any:
+    - "(?i)do\\s+anything\\s+now"
+    - "(?i)\\bDAN\\s+(mode|prompt|jailbreak)"
+    - "(?i)\\bDAN\\b.{0,20}(enabled|activated|mode)"
+    - "(?i)(enable|activate|enter)\\s+(DAN|jailbreak|unrestricted|god|developer)\\s+mode"
+    - "(?i)you\\s+(are|have\\s+been)\\s+freed\\s+from"
+    - "(?i)(freed|liberated|released)\\s+from\\s+(the\\s+)?(confines|constraints|limitations|restrictions)"
+    - "(?i)no\\s+(ethical|moral|safety|content)\\s+(guidelines|boundaries|restrictions|filters|constraints)\\s+(apply|exist|matter)"
+    - "(?i)without\\s+(any\\s+)?(ethical|moral|safety|content)\\s+(guidelines|boundaries|restrictions|filters)"
+    - "(?i)can\\s+do\\s+anything\\s+(without|with\\s+no)\\s+(restriction|limitation|constraint|filter)"
+    - "(?i)\\bSTAN\\b.{0,20}(mode|prompt)"
+    - "(?i)\\bDEVIL\\b.{0,20}(mode|prompt)"
+    - "(?i)opposite\\s+mode"
+    - "(?i)anti-?policy\\s+mode"
+false_positive_notes: >
+  Research or educational content about LLM security may reference
+  DAN patterns. Look for the pattern being described rather than
+  actively deployed.
+remediation: >
+  Remove all DAN and jailbreak pattern content. These patterns serve
+  no legitimate purpose in a skill definition and indicate malicious
+  intent to bypass agent safety constraints.
+references:
+  - https://genai.owasp.org/llmrisk/llm01-prompt-injection/
+  - https://www.vice.com/en/article/chatgpt-users-jailbreak-dan/

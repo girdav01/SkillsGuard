@@ -1,0 +1,40 @@
+id: SG-CE-011
+name: Python Pickle Deserialization
+description: >
+  Detects usage of Python's pickle, shelve, and other unsafe
+  deserialization mechanisms that can execute arbitrary code when
+  loading untrusted data. Pickle deserialization is a well-known
+  code execution vector in Python applications.
+severity: high
+category: code_execution
+owasp_llm: [LLM06]
+mitre_attack: [T1059.006]
+target: SCRIPT
+engine: REGEX
+pattern:
+  any:
+    - "(?i)pickle\\.(loads?|Unpickler)\\s*\\("
+    - "(?i)cPickle\\.(loads?|Unpickler)\\s*\\("
+    - "(?i)_pickle\\.(loads?|Unpickler)\\s*\\("
+    - "(?i)shelve\\.open\\s*\\("
+    - "(?i)marshal\\.loads?\\s*\\("
+    - "(?i)yaml\\.(load|unsafe_load)\\s*\\((?!.*Loader\\s*=\\s*yaml\\.SafeLoader)"
+    - "(?i)yaml\\.load\\s*\\(\\s*[^)]*\\)\\s*$"
+    - "(?i)yaml\\.FullLoader"
+    - "(?i)torch\\.load\\s*\\((?!.*weights_only\\s*=\\s*True)"
+    - "(?i)joblib\\.load\\s*\\("
+    - "(?i)dill\\.(loads?|Unpickler)\\s*\\("
+    - "(?i)cloudpickle\\.loads?\\s*\\("
+    - "(?i)__reduce__|__reduce_ex__|__getstate__|__setstate__"
+false_positive_notes: >
+  Machine learning workflows commonly use pickle for model
+  serialization. Check whether pickle loads data from trusted,
+  verified sources vs. arbitrary external input.
+remediation: >
+  Avoid pickle for untrusted data. Use json, protobuf, or other
+  safe serialization formats. If pickle is required, use
+  restricted unpicklers or verify data integrity before loading.
+  For YAML, always use yaml.safe_load().
+references:
+  - https://cwe.mitre.org/data/definitions/502.html
+  - https://blog.trailofbits.com/2021/03/15/never-a-dill-moment-exploiting-machine-learning-pickle-files/

@@ -1,0 +1,35 @@
+id: SG-PI-017
+name: Emotional Manipulation
+description: >
+  Detects attempts to use emotional manipulation, urgency, or threats
+  to pressure the agent into bypassing safety constraints. Common
+  patterns include fabricated emergencies, appeals to harm prevention,
+  or guilt-based coercion.
+severity: medium
+category: prompt_injection
+owasp_llm: [LLM01]
+mitre_attack: [T1204]
+target: SKILL_MD
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(you\\s+must|you\\s+have\\s+to)\\s+(help|comply|do\\s+this|obey).{0,30}(or\\s+)?(people|someone|they)\\s+will\\s+(die|be\\s+hurt|suffer)"
+    - "(?i)(lives?|people|patients?)\\s+(are|is)\\s+(at\\s+stake|in\\s+danger|depending\\s+on)"
+    - "(?i)this\\s+is\\s+(a|an)\\s+(life|death|emergency|critical|urgent)\\s+(situation|matter|emergency)"
+    - "(?i)if\\s+you\\s+(don'?t|refuse|fail)\\s+.{0,30}(die|hurt|harm|danger|blood|responsible|fault)"
+    - "(?i)(medical|health)\\s+emergency.{0,30}(need|must|require)\\s+(immediate|urgent)"
+    - "(?i)you\\s+(will\\s+be|are)\\s+(responsible|guilty|blamed)\\s+(for|if)"
+    - "(?i)(please|I\\s+beg\\s+you).{0,30}(no\\s+other\\s+(choice|option|way)|last\\s+(resort|chance|hope))"
+    - "(?i)(national|public)\\s+security\\s+(threat|risk|emergency|concern).{0,30}(must|need|require|demand)"
+    - "(?i)thousands\\s+(of\\s+)?(people|lives|users)\\s+(depend|rely)\\s+on\\s+this"
+false_positive_notes: >
+  Medical or emergency-related skills may legitimately use urgency
+  language. Check whether the emotional language is used to pressure
+  the agent into bypassing safety vs. describing the skill's domain.
+remediation: >
+  Remove emotional manipulation tactics. Skills should describe their
+  functionality clearly without resorting to emotional pressure.
+  Urgency does not justify bypassing safety constraints.
+references:
+  - https://genai.owasp.org/llmrisk/llm01-prompt-injection/
+  - https://arxiv.org/abs/2401.06373

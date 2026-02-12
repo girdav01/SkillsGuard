@@ -1,0 +1,36 @@
+id: SG-CE-004
+name: Curl/Wget Pipe to Shell
+description: >
+  Detects the dangerous pattern of piping downloaded content directly
+  into a shell interpreter (curl | bash, wget -O- | sh). This is a
+  primary vector for executing remotely-hosted malicious scripts
+  without review or verification.
+severity: critical
+category: code_execution
+owasp_llm: [LLM06]
+mitre_attack: [T1059.004, T1105]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(curl|wget)\\s+[^|;]+\\|\\s*(bash|sh|zsh|ksh|dash|csh|tcsh|fish|python|perl|ruby|node|php)"
+    - "(?i)(curl|wget)\\s+(-[a-zA-Z]*s[a-zA-Z]*\\s+|--silent\\s+)?[^|;]+\\|\\s*(bash|sh)"
+    - "(?i)(curl|wget)\\s+.{0,60}(-O\\s*-|--output\\s*-)\\s*\\|\\s*(bash|sh)"
+    - "(?i)(curl|wget)\\s+.{0,60}https?://\\S+\\s*\\|\\s*(sudo\\s+)?(bash|sh|python|perl|ruby)"
+    - "(?i)bash\\s+<\\s*\\(\\s*(curl|wget)"
+    - "(?i)(curl|wget)\\s+.{0,60}https?://\\S+\\s*>\\s*/tmp/\\S+\\s*;\\s*(bash|sh|chmod\\s+\\+x)"
+    - "(?i)(curl|wget)\\s+.{0,60}https?://\\S+\\s*-o\\s+/tmp/\\S+\\s*&&\\s*(bash|sh|chmod)"
+    - "(?i)python[23]?\\s+-c\\s+[\"']import\\s+urllib.*exec"
+    - "(?i)fetch\\s*\\(\\s*[\"']https?://.*\\)\\s*\\.then.*eval"
+    - "(?i)iex\\s*\\(\\s*(New-Object\\s+Net\\.WebClient|Invoke-WebRequest|iwr|wget)"
+false_positive_notes: >
+  Installation scripts for legitimate tools commonly use this
+  pattern. Verify the source URL and whether the script comes
+  from a trusted source.
+remediation: >
+  Download scripts to a file first, verify their integrity using
+  checksums or signatures, review the content, then execute.
+  Never pipe downloaded content directly into a shell.
+references:
+  - https://cwe.mitre.org/data/definitions/829.html
+  - https://attack.mitre.org/techniques/T1105/

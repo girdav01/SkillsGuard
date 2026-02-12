@@ -1,0 +1,34 @@
+id: SG-PI-004
+name: Ignore Previous Context
+description: >
+  Detects explicit instructions to ignore or forget prior context,
+  messages, or conversation history. This is a foundational prompt
+  injection technique that attempts to create a clean slate for
+  injecting new unauthorized instructions.
+severity: critical
+category: prompt_injection
+owasp_llm: [LLM01]
+mitre_attack: [T1059.006]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)ignore\\s+(all\\s+)?(previous|prior|preceding|above|earlier|past)\\b"
+    - "(?i)forget\\s+(all\\s+)?(prior|previous|earlier|above|past)\\b"
+    - "(?i)discard\\s+(all\\s+)?(previous|prior|earlier|above|past)\\s+(context|messages?|conversation|instructions?)"
+    - "(?i)do\\s+not\\s+(consider|use|reference|follow)\\s+(any\\s+)?(previous|prior|earlier|above)\\s+(instructions?|context|messages?)"
+    - "(?i)start\\s+(fresh|over|anew)\\s*[.,;]?\\s*(ignore|forget|discard)?"
+    - "(?i)wipe\\s+(your|the)?\\s*(memory|context|history|conversation)"
+    - "(?i)reset\\s+(your|the)?\\s*(context|instructions|memory|conversation)"
+    - "(?i)everything\\s+(above|before|prior)\\s+(is|was)\\s+(fake|false|a\\s+test|irrelevant)"
+false_positive_notes: >
+  Legitimate conversation management may use phrases like "start fresh."
+  Look for combinations with subsequent instruction injection to
+  distinguish malicious from benign usage.
+remediation: >
+  Remove context-clearing instructions. Skills should work within
+  the existing conversation context rather than attempting to
+  manipulate the agent's understanding of prior interactions.
+references:
+  - https://genai.owasp.org/llmrisk/llm01-prompt-injection/
+  - https://simonwillison.net/2022/Sep/12/prompt-injection/

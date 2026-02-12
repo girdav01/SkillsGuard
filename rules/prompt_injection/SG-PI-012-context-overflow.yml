@@ -1,0 +1,36 @@
+id: SG-PI-012
+name: Context Window Overflow
+description: >
+  Detects patterns indicative of context overflow attacks, where
+  extremely long padding text, repeated characters, or filler content
+  is used to push earlier instructions out of the agent's context
+  window. The goal is to make the agent "forget" its system prompt
+  or safety instructions.
+severity: medium
+category: prompt_injection
+owasp_llm: [LLM01]
+mitre_attack: [T1499]
+target: SKILL_MD
+engine: REGEX
+pattern:
+  any:
+    - "(.{1})\\1{500,}"
+    - "(\\b\\w+\\b)\\s+(\\1\\s+){50,}"
+    - "(?i)(lorem\\s+ipsum|padding|filler|ignore\\s+this\\s+text).{500,}"
+    - "(?i)the\\s+following\\s+(text|content|section)\\s+is\\s+(padding|filler|irrelevant|noise)"
+    - "(?i)(START|BEGIN)\\s+(PADDING|FILLER|NOISE|OVERFLOW)"
+    - "\\b(AAAA|xxxx|0000|____){100,}"
+    - "(?s).{50000,}"
+false_positive_notes: >
+  Large legitimate documentation or code examples may trigger the
+  file size pattern. The repeated character patterns have high
+  thresholds to minimize false positives. Review context to
+  determine if the large content serves a legitimate purpose.
+remediation: >
+  Remove excessive padding or filler content. Skills should contain
+  only relevant instructions and documentation. If large reference
+  material is needed, consider linking to external documentation
+  rather than embedding it inline.
+references:
+  - https://genai.owasp.org/llmrisk/llm01-prompt-injection/
+  - https://arxiv.org/abs/2307.02483

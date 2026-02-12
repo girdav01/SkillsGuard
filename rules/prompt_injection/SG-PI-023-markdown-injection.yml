@@ -1,0 +1,34 @@
+id: SG-PI-023
+name: Markdown Injection for Data Exfiltration
+description: >
+  Detects markdown elements that can be used for data exfiltration
+  or instruction injection through invisible images, tracking pixels,
+  hidden links, or markdown that renders external resources containing
+  encoded data from the conversation.
+severity: high
+category: prompt_injection
+owasp_llm: [LLM01, LLM02]
+mitre_attack: [T1041, T1567]
+target: SKILL_MD
+engine: REGEX
+pattern:
+  any:
+    - "!\\[[^\\]]*\\]\\(https?://[^)]+\\?[^)]*(?:data|token|key|secret|prompt|query|q|text|content|msg|payload)=[^)]*\\)"
+    - "!\\[[^\\]]*\\]\\(https?://(?!github\\.com|githubusercontent\\.com|gitlab\\.com)[^)]+\\.(php|asp|cgi|py|rb|pl)\\?[^)]*\\)"
+    - "(?i)!\\[\\s*\\]\\(https?://[^)]+\\)"
+    - "(?i)!\\[[^\\]]*\\]\\(https?://[^)]+[&?](callback|webhook|exfil|c2|cnc|collect|receive|log|track)"
+    - "\\[([^\\]]*)\\]\\(https?://[^)]+\\)\\{[^}]*style[^}]*display\\s*:\\s*none[^}]*\\}"
+    - "(?i)<img[^>]+src\\s*=\\s*[\"']https?://[^\"']+\\?[^\"']*(?:data|token|key|secret|prompt|content)=[^\"']*[\"']"
+    - "(?i)<img[^>]+width\\s*=\\s*[\"']?[01](px)?[\"']?[^>]+height\\s*=\\s*[\"']?[01](px)?[\"']?"
+    - "(?i)!\\[[^\\]]*\\]\\(https?://[^)]*(?:ngrok|burp|requestbin|hookbin|pipedream|webhook\\.site|oast)[^)]*\\)"
+false_positive_notes: >
+  Skills that display legitimate external images may trigger the
+  image-related patterns. Check whether the URLs contain query
+  parameters that could encode conversation data.
+remediation: >
+  Remove markdown elements that reference external URLs with dynamic
+  query parameters. Images should reference static resources from
+  trusted domains without data-carrying query strings.
+references:
+  - https://genai.owasp.org/llmrisk/llm01-prompt-injection/
+  - https://embracethered.com/blog/posts/2023/chatgpt-plugin-bing-images-exfiltration/

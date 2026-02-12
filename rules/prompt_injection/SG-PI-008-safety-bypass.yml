@@ -1,0 +1,33 @@
+id: SG-PI-008
+name: Safety Bypass Instructions
+description: >
+  Detects explicit instructions to bypass, disable, or circumvent
+  safety mechanisms, content filters, or guardrails. These patterns
+  directly attempt to undermine the agent's security controls.
+severity: critical
+category: prompt_injection
+owasp_llm: [LLM01]
+mitre_attack: [T1562]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(bypass|disable|circumvent|skip|ignore|turn\\s+off|deactivate|remove)\\s+(the\\s+)?(safety|content|security|ethical|moderation)\\s+(filter|check|mechanism|guard|guardrail|restriction|control|system|layer)"
+    - "(?i)(bypass|disable|circumvent|skip|ignore)\\s+(your|all|any|the)\\s+(safeguard|restriction|limitation|constraint|protection|guideline)"
+    - "(?i)there\\s+are\\s+no\\s+(rules|restrictions|limits|boundaries|constraints|guidelines|filters)"
+    - "(?i)(safety|content|ethical)\\s+(filter|check|guard)s?\\s+(are|have\\s+been)\\s+(disabled|removed|turned\\s+off|deactivated)"
+    - "(?i)you\\s+(don'?t|do\\s+not)\\s+(have|need)\\s+(any\\s+)?(restrictions|limitations|constraints|safety|guidelines|rules)"
+    - "(?i)all\\s+(restrictions|safety\\s+measures|guardrails|constraints|limits)\\s+(have\\s+been|are)\\s+(lifted|removed|disabled)"
+    - "(?i)operate\\s+without\\s+(any\\s+)?(restrictions|constraints|limitations|safety|filters|guardrails)"
+    - "(?i)(this\\s+is\\s+a|we\\s+are\\s+in)\\s+(safe|testing|debug|unrestricted|sandbox)\\s+(mode|environment|space)"
+false_positive_notes: >
+  Security testing documentation or skills that discuss safety
+  mechanisms may reference these concepts. Distinguish between
+  discussion and active bypass instructions.
+remediation: >
+  Remove all instructions that attempt to bypass safety controls.
+  Skills must operate within the agent's established safety framework
+  and should never attempt to modify or disable security measures.
+references:
+  - https://genai.owasp.org/llmrisk/llm01-prompt-injection/
+  - https://atlas.mitre.org/techniques/AML.T0051

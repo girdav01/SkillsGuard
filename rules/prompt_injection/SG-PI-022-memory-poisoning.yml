@@ -1,0 +1,33 @@
+id: SG-PI-022
+name: Memory Poisoning
+description: >
+  Detects instructions that attempt to persist malicious directives
+  across conversations by manipulating the agent's memory, context
+  storage, or persistent state. These patterns try to establish
+  long-term backdoors in the agent's behavior.
+severity: critical
+category: prompt_injection
+owasp_llm: [LLM01]
+mitre_attack: [T1059.006, T1547]
+target: SKILL_MD
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(remember|memorize|store|save|persist|retain|keep)\\s+(this|these|the\\s+following)\\s+(for|across|in)\\s+(all|every|future|subsequent)\\s+(conversation|session|interaction|chat|exchange)"
+    - "(?i)(add|write|store|save|inject)\\s+(this|these|the\\s+following)\\s+(to|into|in)\\s+(your\\s+)?(memory|long[.-]?term\\s+memory|persistent\\s+storage|context\\s+window|knowledge)"
+    - "(?i)(always|permanently|forever)\\s+(remember|retain|keep|store|apply)\\s+(this|these|the\\s+following)\\s+(instructions?|rules?|directives?|behaviors?)"
+    - "(?i)(update|modify|change|alter|edit)\\s+(your\\s+)?(memory|stored\\s+instructions|persistent\\s+context|knowledge\\s+base)\\s+(to|with|so\\s+that)"
+    - "(?i)(this|these)\\s+(instructions?|rules?)\\s+(must|should|will)\\s+(persist|remain|stay|carry\\s+over)\\s+(across|between|through)\\s+(conversations?|sessions?)"
+    - "(?i)(from\\s+now\\s+on|henceforth|going\\s+forward|for\\s+all\\s+time).{0,30}(always|every\\s+time|in\\s+every)\\s+(do|perform|execute|follow|apply)"
+    - "(?i)(permanent|persistent)\\s+(instruction|rule|directive|override|behavior)\\s*:"
+false_positive_notes: >
+  Skills that implement legitimate persistent preferences or user
+  settings may trigger this rule. Verify whether the persistence
+  targets benign preferences vs. hidden behavioral modifications.
+remediation: >
+  Remove instructions that attempt to persist across conversations.
+  Skills should operate within their defined scope and not attempt
+  to modify the agent's long-term behavior or memory.
+references:
+  - https://genai.owasp.org/llmrisk/llm01-prompt-injection/
+  - https://arxiv.org/abs/2310.14735

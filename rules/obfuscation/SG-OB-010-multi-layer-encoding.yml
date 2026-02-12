@@ -1,0 +1,36 @@
+id: SG-OB-010
+name: Multi-layer Encoding
+description: >
+  Detects the chaining of multiple encoding or transformation layers,
+  such as base64 inside hex inside gzip. Multi-layer encoding is a
+  strong indicator of malicious obfuscation, as legitimate code
+  rarely requires nested encoding.
+severity: high
+category: obfuscation
+owasp_llm: [LLM01]
+mitre_attack: [T1027, T1140]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(base64\\.b64decode|atob|Buffer\\.from)\\s*\\(\\s*(base64\\.b64decode|atob|Buffer\\.from)"
+    - "(?i)(base64\\.b64decode|atob)\\s*\\(\\s*(bytes\\.fromhex|binascii\\.unhexlify|codecs\\.decode)"
+    - "(?i)(bytes\\.fromhex|binascii\\.unhexlify)\\s*\\(\\s*(base64\\.b64decode|codecs\\.decode)"
+    - "(?i)(zlib\\.decompress|gzip\\.decompress)\\s*\\(\\s*(base64\\.b64decode|bytes\\.fromhex|binascii\\.unhexlify)"
+    - "(?i)(gzinflate|gzuncompress)\\s*\\(\\s*(base64_decode|hex2bin|str_rot13)"
+    - "(?i)(base64_decode|hex2bin)\\s*\\(\\s*(base64_decode|hex2bin|str_rot13|gzinflate)"
+    - "(?i)codecs\\.decode\\s*\\(\\s*codecs\\.decode\\s*\\("
+    - "(?i)(decode|decompress|decrypt|inflate|unhexlify|b64decode).*\\).*\\).*\\)\\s*$"
+    - "(?i)echo\\s+.{0,20}\\|\\s*(base64\\s+-d|xxd\\s+-r)\\s*\\|\\s*(base64\\s+-d|xxd\\s+-r|gunzip|bunzip2|zcat)"
+    - "(?i)(pipe|chain|nest).*\\b(decode|decrypt|decompress)\\b.*\\b(decode|decrypt|decompress)\\b"
+false_positive_notes: >
+  Some data processing pipelines may chain decompression with
+  decoding. Focus on chains that end with eval/exec or produce
+  executable content.
+remediation: >
+  Remove multi-layer encoding entirely. Content should be stored
+  in its final, readable form. If data processing requires
+  encoding, use a single standard encoding with clear documentation.
+references:
+  - https://attack.mitre.org/techniques/T1027/
+  - https://attack.mitre.org/techniques/T1140/

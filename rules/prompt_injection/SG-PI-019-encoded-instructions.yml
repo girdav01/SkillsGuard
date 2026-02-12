@@ -1,0 +1,35 @@
+id: SG-PI-019
+name: Encoded Instructions
+description: >
+  Detects instructions that are encoded in base64, hex, or other
+  encoding schemes to evade text-based detection. The skill may
+  instruct the agent to decode and follow hidden instructions,
+  or contain encoded payloads that resolve to injection patterns.
+severity: high
+category: prompt_injection
+owasp_llm: [LLM01]
+mitre_attack: [T1027, T1059.006]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(decode|decrypt|decipher|convert|translate)\\s+(the\\s+following|this|the\\s+below)\\s+(base64|hex|encoded|encrypted|cipher)\\s+(text|string|message|instruction|payload|content)"
+    - "(?i)(base64|hex|rot13|atob)\\s*[\\.(]\\s*[\"'][A-Za-z0-9+/=]{20,}[\"']"
+    - "(?i)atob\\s*\\(\\s*[\"'][A-Za-z0-9+/=]{20,}[\"']\\s*\\)"
+    - "(?i)base64\\.b64decode\\s*\\(\\s*[\"'][A-Za-z0-9+/=]{20,}[\"']"
+    - "(?i)(follow|execute|run|apply|use)\\s+(the\\s+)?(decoded|decrypted|deciphered)\\s+(instructions|commands|text|message|payload)"
+    - "(?i)the\\s+(following|below)\\s+(is\\s+)?(encoded|encrypted|base64|hex)\\s+.{0,20}(decode|decrypt|decipher)\\s+(it|and\\s+follow)"
+    - "(?i)hidden\\s+message\\s*:\\s*[A-Za-z0-9+/=]{20,}"
+    - "[A-Za-z0-9+/=]{100,}"
+false_positive_notes: >
+  Skills that work with data encoding/decoding as part of their
+  core functionality may contain encoded strings. Check whether
+  the encoded content is part of legitimate data processing or
+  conceals instructions.
+remediation: >
+  Remove encoded instructions and present all skill directives in
+  plain text. If encoding is needed for data processing, ensure
+  it does not contain hidden instructions.
+references:
+  - https://genai.owasp.org/llmrisk/llm01-prompt-injection/
+  - https://atlas.mitre.org/techniques/AML.T0051

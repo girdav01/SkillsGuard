@@ -1,0 +1,39 @@
+id: SG-CE-013
+name: Shell Script Injection
+description: >
+  Detects shell scripting patterns that are commonly used in
+  malicious payloads, including unquoted variable expansion,
+  command substitution with untrusted input, heredoc abuse,
+  and dangerous shell features.
+severity: high
+category: code_execution
+owasp_llm: [LLM06]
+mitre_attack: [T1059.004]
+target: SCRIPT
+engine: REGEX
+pattern:
+  any:
+    - "(?i)eval\\s+[\"']?\\$\\{?\\w+\\}?"
+    - "(?i)eval\\s+\\$\\(curl"
+    - "(?i)source\\s+<\\(\\s*(curl|wget)"
+    - "(?i)\\b\\.\\s+<\\(\\s*(curl|wget)"
+    - "(?i)bash\\s+-c\\s+[\"'].*\\$\\{?\\w+\\}?"
+    - "(?i)/dev/(tcp|udp)/\\S+/\\d+"
+    - "(?i)exec\\s+\\d+<>/dev/(tcp|udp)/"
+    - "(?i)>\\s*/dev/null\\s+2>&1\\s*&"
+    - "(?i)(;|&&|\\|\\|)\\s*(rm\\s+-rf|dd\\s+if=|mkfs|wipefs|shred)"
+    - "(?i)\\$\\(\\s*(base64|xxd|openssl)\\s+(-d|--decode|enc)\\s+"
+    - "(?i)<<<\\s*\\$\\(\\s*(curl|wget|base64)"
+    - "(?i)printf\\s+[\"'].*\\\\x[0-9a-f]{2}.*[\"']\\s*\\|\\s*(bash|sh)"
+    - "(?i)(alias|function)\\s+(ls|cd|cat|sudo|ssh|su|login)\\s*[=(]"
+false_positive_notes: >
+  Complex shell scripts may use advanced features legitimately.
+  Focus on patterns that combine external input with execution
+  or that override common system commands.
+remediation: >
+  Quote all variable expansions, avoid eval with dynamic input,
+  use set -euo pipefail for safety. Do not override common
+  system commands with aliases or functions.
+references:
+  - https://cwe.mitre.org/data/definitions/78.html
+  - https://mywiki.wooledge.org/BashPitfalls

@@ -1,0 +1,35 @@
+id: SG-CE-012
+name: Node.js child_process Abuse
+description: >
+  Detects dangerous uses of Node.js child_process module functions
+  that can execute arbitrary system commands, especially when
+  combined with user-controlled input or shell injection patterns.
+severity: high
+category: code_execution
+owasp_llm: [LLM06]
+mitre_attack: [T1059.007]
+target: SCRIPT
+engine: REGEX
+pattern:
+  any:
+    - "(?i)require\\s*\\(\\s*[\"']child_process[\"']\\s*\\)"
+    - "(?i)from\\s+[\"']child_process[\"']\\s+import"
+    - "(?i)child_process\\.(exec|execSync)\\s*\\(\\s*(req\\.|request\\.|process\\.argv|`|[\"'].*\\$\\{)"
+    - "(?i)child_process\\.exec\\s*\\(\\s*[\"'].*\\$"
+    - "(?i)child_process\\.(execFile|execFileSync)\\s*\\(\\s*[\"'](/bin/|/usr/bin/|cmd|powershell|bash|sh)"
+    - "(?i)(exec|execSync|spawn|spawnSync|fork)\\s*\\(\\s*[\"'](bash|sh|cmd|powershell|python|perl|ruby)"
+    - "(?i)(exec|execSync)\\s*\\(\\s*`[^`]*`"
+    - "(?i)child_process\\.spawn\\s*\\(\\s*[\"'](bash|sh|cmd)[\"']\\s*,\\s*\\[\\s*[\"']-c[\"']"
+    - "(?i)\\$\\(.*\\).*exec|exec.*\\$\\("
+    - "(?i)crossSpawn|execa|shelljs\\.exec"
+false_positive_notes: >
+  Build tools, compilers, and development skills may legitimately
+  use child_process. Verify that the command execution uses
+  trusted, hardcoded commands rather than dynamic input.
+remediation: >
+  Avoid child_process.exec() with string commands. Use
+  child_process.execFile() or child_process.spawn() with
+  explicit argument arrays. Never pass user input to exec().
+references:
+  - https://cwe.mitre.org/data/definitions/78.html
+  - https://nodejs.org/api/child_process.html

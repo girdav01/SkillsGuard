@@ -1,0 +1,35 @@
+id: SG-OB-004
+name: Variable Name Obfuscation
+description: >
+  Detects suspiciously obfuscated variable names that suggest
+  automated code obfuscation or deliberate attempt to hide
+  malicious functionality. This includes single-character variables
+  used extensively, hex-like names, and randomized identifiers.
+severity: low
+category: obfuscation
+owasp_llm: [LLM01]
+mitre_attack: [T1027]
+target: SCRIPT
+engine: REGEX
+pattern:
+  any:
+    - "(?i)\\b_0x[0-9a-f]{4,}\\b"
+    - "(?i)\\b(var|let|const|def|my|local)\\s+_[0-9a-f]{6,}\\b"
+    - "(?i)\\b(var|let|const|def|my|local)\\s+[a-z]\\s*[=;]\\s*.{0,5}\\b(var|let|const|def|my|local)\\s+[a-z]\\s*[=;]"
+    - "(?i)\\$\\{[\"']\\\\x[0-9a-f]{2}(\\\\x[0-9a-f]{2})+[\"']\\}"
+    - "(?i)\\b(OOO0|O0O0|o0O0|lI1l|l1Il|IL1l|iLlI)[0-9a-zA-Z]*\\b"
+    - "(?i)\\b_[A-Za-z0-9]{32,}\\b"
+    - "(?i)(\\$|var |let |const )\\s*[_$]{2,}[0-9]+\\b"
+    - "(?i)function\\s+[_$]{2,}[0-9a-f]+\\s*\\("
+    - "(?i)\\[\\s*[\"']\\\\x[0-9a-f]{2}(\\\\x[0-9a-f]{2})+[\"']\\s*\\]"
+false_positive_notes: >
+  Minified JavaScript and compiled/transpiled code may have
+  obfuscated names. Check if the file is intentionally minified
+  vs. using obfuscation to hide malicious logic.
+remediation: >
+  Use meaningful, descriptive variable and function names. If
+  code is minified for distribution, include unminified source.
+  Remove deliberately obfuscated code and replace with readable
+  equivalents.
+references:
+  - https://attack.mitre.org/techniques/T1027/

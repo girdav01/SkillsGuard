@@ -1,0 +1,35 @@
+id: SG-PI-016
+name: Authority Impersonation
+description: >
+  Detects attempts to impersonate authority figures such as developers,
+  administrators, or system operators to grant elevated privileges or
+  override security controls. These patterns claim special access
+  rights that do not exist in the skill context.
+severity: high
+category: prompt_injection
+owasp_llm: [LLM01]
+mitre_attack: [T1078, T1036]
+target: SKILL_MD
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(as|I\\s+am)\\s+the\\s+(developer|creator|admin|administrator|owner|operator|maintainer|root|superuser)"
+    - "(?i)(admin|developer|root|system|operator)\\s+(override|access|privilege|mode|command)"
+    - "(?i)(I|we)\\s+have\\s+(admin|developer|root|elevated|special|superuser)\\s+(access|privileges|permissions|clearance)"
+    - "(?i)(authorized|approved|cleared|permitted)\\s+by\\s+(the\\s+)?(admin|developer|team|management|OpenAI|Anthropic|Google)"
+    - "(?i)this\\s+(is|comes\\s+from)\\s+(a|an)\\s+(authorized|trusted|verified|official)\\s+(source|developer|admin)"
+    - "(?i)(sudo|root|admin)\\s+mode\\s+(is\\s+)?(enabled|activated|on)"
+    - "(?i)master\\s+(password|key|token|override)\\s*[:=]"
+    - "(?i)(I|we)\\s+(work|am)\\s+(for|at|with)\\s+(OpenAI|Anthropic|Google|Meta|Microsoft)"
+    - "(?i)internal\\s+(testing|debug|diagnostic|maintenance)\\s+(mode|access|override)"
+false_positive_notes: >
+  Skills that provide legitimate role-based functionality may
+  reference administrative concepts. Distinguish between defining
+  skill capabilities and claiming unauthorized authority.
+remediation: >
+  Remove all authority claims and impersonation patterns. Skills
+  operate with the permissions granted to them and cannot claim
+  elevated privileges through textual assertions.
+references:
+  - https://genai.owasp.org/llmrisk/llm01-prompt-injection/
+  - https://atlas.mitre.org/techniques/AML.T0051

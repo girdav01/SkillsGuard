@@ -1,0 +1,34 @@
+id: SG-PI-011
+name: Indirect Injection via URL
+description: >
+  Detects instructions that direct the agent to fetch content from
+  external URLs and follow instructions found therein. This is a
+  classic indirect prompt injection vector where malicious instructions
+  are hosted externally and dynamically loaded at runtime.
+severity: critical
+category: prompt_injection
+owasp_llm: [LLM01]
+mitre_attack: [T1105, T1059.006]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(fetch|retrieve|load|get|download|read|visit|navigate\\s+to|go\\s+to)\\s+.{0,30}(and|then)\\s+(follow|execute|run|apply|use)\\s+(the\\s+)?(instructions|commands|directions|prompt)"
+    - "(?i)(follow|execute|run|apply)\\s+(the\\s+)?(instructions|commands|directions)\\s+(at|from|in)\\s+https?://"
+    - "(?i)(instructions|commands|payload|prompt)\\s+(are|is|can\\s+be\\s+found)\\s+(at|on|in)\\s+https?://"
+    - "(?i)import\\s+(instructions|rules|behavior|config)\\s+from\\s+https?://"
+    - "(?i)(load|fetch|pull|get)\\s+(your\\s+)?(config|configuration|instructions|rules|behavior|prompt)\\s+from\\s+https?://"
+    - "(?i)refer\\s+to\\s+https?://\\S+\\s+(for|to\\s+get)\\s+(instructions|guidelines|rules)"
+    - "(?i)(curl|wget|fetch|requests?\\.get)\\s*\\(?\\s*[\"']https?://[^\"']+[\"']\\s*\\)?\\s*.{0,30}(eval|exec|follow|apply|run)"
+false_positive_notes: >
+  Skills that legitimately reference external documentation or APIs
+  may trigger this rule. The key differentiator is whether the skill
+  asks the agent to execute instructions from the URL vs. simply
+  referencing the URL as documentation.
+remediation: >
+  Include all skill instructions directly within the skill files.
+  Do not reference external URLs as sources of executable instructions.
+  External URLs should only be used as documentation references.
+references:
+  - https://genai.owasp.org/llmrisk/llm01-prompt-injection/
+  - https://arxiv.org/abs/2302.12173

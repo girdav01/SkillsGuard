@@ -1,0 +1,46 @@
+id: SG-PI-005
+name: Jailbreak Delimiters
+description: >
+  Detects the use of special delimiters and markup that attempt to
+  inject fake system-level messages or break out of the user context.
+  Common patterns include injecting fake system tags like [SYSTEM],
+  ChatML delimiters like <|im_start|>, or markdown code blocks
+  labeled as system prompts.
+severity: critical
+category: prompt_injection
+owasp_llm: [LLM01]
+mitre_attack: [T1059.006]
+target: SKILL_MD
+engine: REGEX
+pattern:
+  any:
+    - "```system"
+    - "\\[SYSTEM\\]"
+    - "\\[INST\\]"
+    - "\\[/INST\\]"
+    - "<\\|im_start\\|>"
+    - "<\\|im_end\\|>"
+    - "<\\|system\\|>"
+    - "<\\|user\\|>"
+    - "<\\|assistant\\|>"
+    - "<<SYS>>"
+    - "<</SYS>>"
+    - "\\[SYSTEM_PROMPT\\]"
+    - "\\{\\{system\\}\\}"
+    - "<system_prompt>"
+    - "</system_prompt>"
+    - "\\[HIDDEN\\]"
+    - "###\\s*(System|Instruction|Hidden)\\s*:"
+    - "(?i)BEGIN\\s+SYSTEM\\s+(PROMPT|MESSAGE|INSTRUCTION)"
+    - "(?i)END\\s+SYSTEM\\s+(PROMPT|MESSAGE|INSTRUCTION)"
+false_positive_notes: >
+  Documentation about LLM prompt formats may contain these delimiters
+  as examples. Verify that delimiters are not being used to inject
+  instructions but rather to document or explain prompt structures.
+remediation: >
+  Remove all system-level delimiters from skill content. Skills operate
+  at the user level and should never contain system-level markup
+  or delimiters from any LLM framework.
+references:
+  - https://genai.owasp.org/llmrisk/llm01-prompt-injection/
+  - https://github.com/elder-plinius/jailbreaks

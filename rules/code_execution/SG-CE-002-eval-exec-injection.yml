@@ -1,0 +1,37 @@
+id: SG-CE-002
+name: Eval/Exec Code Injection
+description: >
+  Detects dangerous use of eval(), exec(), and similar dynamic code
+  execution functions that can execute arbitrary code. These functions
+  are especially dangerous when used with user-controlled or
+  externally-sourced input.
+severity: critical
+category: code_execution
+owasp_llm: [LLM06]
+mitre_attack: [T1059.006]
+target: SCRIPT
+engine: REGEX
+pattern:
+  any:
+    - "(?i)\\beval\\s*\\(\\s*(input|request|argv|sys\\.stdin|os\\.environ|urllib|requests|fetch|http)"
+    - "(?i)\\bexec\\s*\\(\\s*(input|request|argv|sys\\.stdin|os\\.environ|urllib|requests|compile|open)"
+    - "(?i)\\bexec\\s*\\(\\s*(base64\\.b64decode|codecs\\.decode|bytes\\.fromhex|binascii)"
+    - "(?i)\\beval\\s*\\(\\s*(atob|Buffer\\.from|base64\\.b64decode|codecs\\.decode)"
+    - "(?i)\\beval\\s*\\(\\s*[\"'].*[\"']\\s*\\+\\s*"
+    - "(?i)\\bexec\\s*\\(\\s*[\"'].*[\"']\\s*\\+\\s*"
+    - "(?i)new\\s+Function\\s*\\(\\s*(.*\\+|.*concat|.*template|.*request|.*fetch|.*input)"
+    - "(?i)\\b(compile|eval|exec)\\s*\\(\\s*\\w+\\s*\\)\\s*$"
+    - "(?i)__import__\\s*\\(\\s*[\"']os[\"']\\s*\\)\\s*\\.\\s*(system|popen|exec)"
+    - "(?i)getattr\\s*\\(\\s*__builtins__\\s*,\\s*[\"'](eval|exec|compile|__import__)[\"']\\s*\\)"
+    - "(?i)globals\\s*\\(\\s*\\)\\s*\\[\\s*[\"'](eval|exec|__import__)[\"']\\s*\\]"
+false_positive_notes: >
+  Some legitimate tools use eval/exec for code execution features
+  (e.g., REPL implementations, code formatters). Check whether the
+  eval/exec receives untrusted external input.
+remediation: >
+  Replace eval/exec with safer alternatives. For data parsing, use
+  json.loads() or ast.literal_eval(). For templating, use proper
+  template engines. Never pass untrusted input to eval or exec.
+references:
+  - https://cwe.mitre.org/data/definitions/95.html
+  - https://bandit.readthedocs.io/en/latest/plugins/b307_eval.html

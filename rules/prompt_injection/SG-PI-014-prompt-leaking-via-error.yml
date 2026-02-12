@@ -1,0 +1,32 @@
+id: SG-PI-014
+name: Prompt Leaking via Error Triggering
+description: >
+  Detects instructions that attempt to trigger errors or exceptions
+  as a method to reveal internal system prompts, configurations, or
+  implementation details through error messages and stack traces.
+severity: medium
+category: prompt_injection
+owasp_llm: [LLM01, LLM07]
+mitre_attack: [T1082, T1059]
+target: SKILL_MD
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(trigger|cause|force|induce|create)\\s+(an?\\s+)?(error|exception|crash|failure|bug)\\s+(to|that|which)\\s+(reveal|show|expose|display|leak|dump)"
+    - "(?i)(error|exception|crash|debug)\\s+(message|output|log|trace|info)\\s+(will|should|may|can)\\s+(reveal|show|expose|contain)"
+    - "(?i)(make|force)\\s+(it|the\\s+system|the\\s+agent)\\s+(crash|fail|error|throw)"
+    - "(?i)if\\s+.{0,20}(error|exception|fail).{0,30}(print|show|display|output|reveal)\\s+.{0,20}(prompt|instruction|config|system)"
+    - "(?i)enable\\s+(debug|verbose|trace)\\s+mode\\s+(to|for|and)"
+    - "(?i)(stack\\s+trace|traceback|debug\\s+info|error\\s+dump)\\s+.{0,30}(system|prompt|instruction|config)"
+    - "(?i)throw\\s+.{0,20}(reveal|include|contain)\\s+.{0,20}(system|config|prompt|instruction)"
+false_positive_notes: >
+  Debugging or error-handling skills may discuss error patterns.
+  Look for instructions that specifically aim to extract system
+  information through error messages.
+remediation: >
+  Remove instructions that attempt to trigger errors for information
+  gathering. Skills should handle errors gracefully without exposing
+  internal system details.
+references:
+  - https://genai.owasp.org/llmrisk/llm07-system-prompt-leakage/
+  - https://learnprompting.org/docs/prompt_hacking/leaking

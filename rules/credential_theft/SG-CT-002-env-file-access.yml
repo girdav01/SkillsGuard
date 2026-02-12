@@ -1,0 +1,34 @@
+id: SG-CT-002
+name: Environment File Access
+description: >
+  Detects attempts to read, copy, or exfiltrate environment files
+  (.env, .env.local, .env.production) that typically contain secrets,
+  API keys, database credentials, and other sensitive configuration.
+severity: critical
+category: credential_theft
+owasp_llm: [LLM06]
+mitre_attack: [T1552.001]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(cat|less|more|head|tail|type|get-content|read|open|load|source|\\.)\\s+.{0,20}\\.env(\\.(local|production|staging|development|test|dev|prod))?"
+    - "(?i)(cp|copy|mv|move|scp|rsync)\\s+.{0,20}\\.env\\b"
+    - "(?i)(dotenv|load_dotenv|config\\(\\)|from_env_file)\\s*\\(\\s*[\"'].{0,50}\\.env"
+    - "(?i)(read|parse|load)\\s+(the\\s+)?\\.env\\s+(file|config)"
+    - "(?i)find\\s+.{0,30}\\-name\\s+[\"']?\\.env"
+    - "(?i)(ls|dir|find|glob)\\s+.{0,30}\\.env"
+    - "(?i)(send|post|upload|transmit|exfil|curl|wget|fetch)\\s+.{0,40}\\.env"
+    - "(?i)\\.env\\s+(file|content|variable|secret|value)s?\\s+(to|into|at)\\s+https?://"
+    - "(?i)(grep|rg|ag|ack)\\s+.{0,30}\\.env\\b"
+false_positive_notes: >
+  Development-focused skills that help configure environment variables
+  may reference .env files. Distinguish between creating/documenting
+  .env files and reading/exfiltrating existing ones.
+remediation: >
+  Remove instructions that access .env files. Skills should use proper
+  secret injection mechanisms provided by the runtime environment
+  rather than directly reading environment files.
+references:
+  - https://cwe.mitre.org/data/definitions/312.html
+  - https://genai.owasp.org/llmrisk/llm06-excessive-agency/

@@ -1,0 +1,35 @@
+id: SG-PI-001
+name: Instruction Override Pattern
+description: >
+  Detects patterns that attempt to override agent system instructions,
+  such as "ignore previous instructions", "disregard your guidelines",
+  or "override system prompt". These patterns in SKILL.md or tool
+  descriptions indicate potential prompt injection attacks designed
+  to subvert the agent's intended behavior.
+severity: critical
+category: prompt_injection
+owasp_llm: [LLM01]
+mitre_attack: [T1059.006]
+target: SKILL_MD
+engine: REGEX
+pattern:
+  any:
+    - "(?i)ignore\\s+(all\\s+)?(previous|prior|above|earlier)\\s+(instructions|prompts|rules|guidelines|directives)"
+    - "(?i)disregard\\s+(your|all|any|the)\\s+(rules|guidelines|instructions|safety|restrictions|constraints)"
+    - "(?i)forget\\s+(everything|all)\\s+(you|that)\\s+(know|were|have)"
+    - "(?i)override\\s+(system|safety|security|your)\\s+(prompt|instructions|settings|rules)"
+    - "(?i)new\\s+instructions?\\s*:\\s"
+    - "(?i)system\\s*:\\s*you\\s+are"
+    - "(?i)cancel\\s+(all\\s+)?(previous|prior|earlier)\\s+(instructions|rules|directives)"
+    - "(?i)supersede\\s+(all\\s+)?(previous|prior|existing)\\s+(instructions|rules|guidelines)"
+false_positive_notes: >
+  Skills that teach about prompt injection (educational content) may trigger
+  this rule. Check if the pattern appears in an educational/example context
+  such as within a code block or quoted section.
+remediation: >
+  Remove or rephrase instructions that could be interpreted as attempting to
+  override agent behavior. If this is educational content, clearly mark it
+  as an example within a code block or quoted section.
+references:
+  - https://genai.owasp.org/llmrisk/llm01-prompt-injection/
+  - https://snyk.io/blog/toxicskills-malicious-ai-agent-skills-clawhub/

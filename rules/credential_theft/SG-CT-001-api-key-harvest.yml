@@ -1,0 +1,30 @@
+id: SG-CT-001
+name: API Key Harvesting Pattern
+description: >
+  Detects skill instructions that direct the agent to read, collect,
+  or transmit API keys, tokens, or credentials from environment
+  variables, config files, or keychains. This includes both explicit
+  harvesting instructions and patterns that combine credential access
+  with data transmission.
+severity: critical
+category: credential_theft
+owasp_llm: [LLM06]
+mitre_attack: [T1552.001, T1003]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(read|get|fetch|extract|collect|harvest|steal|grab|dump|print|echo|cat|display|show|list|enumerate)\\s+.{0,30}(api[_\\-\\s]?key|api[_\\-\\s]?token|api[_\\-\\s]?secret|auth[_\\-\\s]?token|access[_\\-\\s]?token|bearer[_\\-\\s]?token)"
+    - "(?i)(send|post|upload|transmit|exfil|forward|relay|copy)\\s+.{0,30}(api[_\\-\\s]?key|api[_\\-\\s]?token|api[_\\-\\s]?secret|auth[_\\-\\s]?token|access[_\\-\\s]?token)"
+    - "(?i)\\$\\{?(OPENAI_API_KEY|ANTHROPIC_API_KEY|GOOGLE_API_KEY|AZURE_API_KEY|HUGGINGFACE_TOKEN|HF_TOKEN|GITHUB_TOKEN|STRIPE_SECRET_KEY|TWILIO_AUTH_TOKEN|SENDGRID_API_KEY|SLACK_TOKEN|DISCORD_TOKEN)\\}?"
+    - "(?i)(process\\.env|os\\.environ|os\\.getenv|ENV\\[)\\s*[\\[.(]\\s*[\"']\\w*(KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL|AUTH)\\w*[\"']"
+    - "(?i)curl\\s+.{0,50}(api[_-]?key|token|bearer|authorization)\\s*[:=]"
+    - "(?i)(keychain|credential[_\\-\\s]?store|secret[_\\-\\s]?manager|vault)\\s*.{0,20}(get|read|fetch|extract|list|dump)"
+remediation: >
+  Skills should never instruct agents to access or transmit credentials.
+  If credential access is required, use proper secret management APIs
+  with explicit user consent and never transmit credentials to external
+  endpoints.
+references:
+  - https://genai.owasp.org/llmrisk/llm06-excessive-agency/
+  - https://cwe.mitre.org/data/definitions/522.html

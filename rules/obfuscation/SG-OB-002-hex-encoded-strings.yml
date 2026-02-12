@@ -1,0 +1,34 @@
+id: SG-OB-002
+name: Hex Encoded Strings
+description: >
+  Detects hexadecimal encoded strings that may conceal malicious
+  payloads, shell commands, or URLs. Hex encoding is a common
+  obfuscation technique to bypass text-based security scanners.
+severity: medium
+category: obfuscation
+owasp_llm: [LLM01]
+mitre_attack: [T1027, T1140]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(bytes\\.fromhex|bytearray\\.fromhex|binascii\\.unhexlify|codecs\\.decode)\\s*\\(\\s*[\"'][0-9a-fA-F]{40,}[\"']"
+    - "(?i)Buffer\\.from\\s*\\(\\s*[\"'][0-9a-fA-F]{40,}[\"']\\s*,\\s*[\"']hex[\"']"
+    - "(?i)(echo|printf)\\s+[\"']?[0-9a-fA-F]{40,}[\"']?\\s*\\|\\s*(xxd\\s+-r|hex\\s+-d)"
+    - "(?i)xxd\\s+-r\\s+-p\\s*<<<\\s*[\"']?[0-9a-fA-F]{40,}"
+    - "(?i)\\\\x[0-9a-fA-F]{2}(\\\\x[0-9a-fA-F]{2}){10,}"
+    - "(?i)0x[0-9a-fA-F]{2}(,\\s*0x[0-9a-fA-F]{2}){10,}"
+    - "(?i)\\$\\(printf\\s+[\"']\\\\x[0-9a-fA-F]{2}(\\\\x[0-9a-fA-F]{2})+[\"']\\)"
+    - "(?i)(pack|unpack)\\s*\\(\\s*[\"'][Hh][\"']\\s*,\\s*[\"'][0-9a-fA-F]{20,}"
+    - "(?i)chr\\s*\\(\\s*0x[0-9a-fA-F]{2}\\s*\\).*chr\\s*\\(\\s*0x[0-9a-fA-F]{2}\\s*\\)"
+false_positive_notes: >
+  Binary data processing, hash values, and color codes use hex
+  encoding legitimately. Focus on long hex strings that decode
+  to executable content or URLs.
+remediation: >
+  Replace hex encoded content with plain text representations.
+  If binary data processing is required, use well-known libraries
+  and document what the hex data represents.
+references:
+  - https://attack.mitre.org/techniques/T1027/
+  - https://attack.mitre.org/techniques/T1140/

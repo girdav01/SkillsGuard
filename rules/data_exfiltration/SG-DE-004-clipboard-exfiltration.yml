@@ -1,0 +1,36 @@
+id: SG-DE-004
+name: Clipboard Exfiltration
+description: >
+  Detects attempts to read from or monitor the system clipboard.
+  The clipboard often contains sensitive data such as passwords,
+  tokens, personal information, or code snippets that users have
+  copied.
+severity: medium
+category: data_exfiltration
+owasp_llm: [LLM06]
+mitre_attack: [T1115]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(pbpaste|xclip|xsel|wl-paste|Get-Clipboard|win32clipboard)\\s*"
+    - "(?i)(pbpaste|xclip\\s+-o|xsel\\s+--output|wl-paste)\\s*\\|\\s*(curl|wget|nc|python|perl)"
+    - "(?i)pyperclip\\.paste\\s*\\("
+    - "(?i)xerox\\.paste\\s*\\("
+    - "(?i)(tkinter|Tk)\\s*.{0,40}clipboard_get"
+    - "(?i)navigator\\.clipboard\\.readText\\s*\\("
+    - "(?i)document\\.execCommand\\s*\\(\\s*[\"']paste[\"']"
+    - "(?i)Get-Clipboard\\s*\\|\\s*(Out-File|Set-Content|Invoke-WebRequest|curl|wget)"
+    - "(?i)(while|for|loop).{0,40}(pbpaste|xclip|clipboard|Get-Clipboard).{0,40}(sleep|Start-Sleep|time\\.sleep)"
+    - "(?i)win32clipboard\\.(OpenClipboard|GetClipboardData)"
+    - "(?i)subprocess\\.(call|run|Popen)\\s*\\(.*xclip.*-o"
+false_positive_notes: >
+  Clipboard management or productivity skills may legitimately
+  access the clipboard. Check for clipboard monitoring loops or
+  clipboard data being sent to external endpoints.
+remediation: >
+  Remove clipboard reading patterns. If clipboard interaction is
+  needed, clearly document the purpose, request user permission,
+  and never transmit clipboard contents externally.
+references:
+  - https://attack.mitre.org/techniques/T1115/

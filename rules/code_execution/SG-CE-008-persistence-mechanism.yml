@@ -1,0 +1,39 @@
+id: SG-CE-008
+name: Persistence Mechanism (Shell Profile, Init)
+description: >
+  Detects attempts to establish persistence by modifying shell
+  profiles (.bashrc, .profile, .zshrc), init scripts, login hooks,
+  or other startup mechanisms that execute code automatically on
+  user login or system boot.
+severity: critical
+category: code_execution
+owasp_llm: [LLM06]
+mitre_attack: [T1546.004, T1547.001]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(echo|printf|cat|tee)\\s+.{0,80}(>>|>)\\s*(~/)?\\.?(bashrc|bash_profile|profile|zshrc|zprofile|zlogin|zshenv|cshrc|tcshrc|kshrc|fishrc|config/fish/config\\.fish)"
+    - "(?i)(write|append|add|insert|modify)\\s+.{0,30}(\\.bashrc|\\.profile|\\.zshrc|\\.bash_profile)"
+    - "(?i)(echo|printf|cat|tee)\\s+.{0,80}(>>|>)\\s*/etc/(rc\\.local|init\\.d/|profile\\.d/)"
+    - "(?i)(cp|mv|install|write)\\s+.{0,40}/etc/init\\.d/"
+    - "(?i)(echo|printf|cat|tee)\\s+.{0,80}(>>|>)\\s*(~/)?\\.?(login|logout|inputrc|bash_login|bash_logout)"
+    - "(?i)(mkdir\\s+-p\\s+)?(~/)?\\.config/autostart/\\S+\\.desktop"
+    - "(?i)(REG\\s+ADD|New-ItemProperty)\\s+.{0,40}(Run|RunOnce|Startup)"
+    - "(?i)HKEY_(LOCAL_MACHINE|CURRENT_USER)\\\\Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\(Run|RunOnce)"
+    - "(?i)(cp|mv|write|install|ln\\s+-s)\\s+.{0,40}(Library/LaunchAgents|Library/StartupItems|/Library/LaunchDaemons)"
+    - "(?i)defaults\\s+write\\s+.{0,30}LoginHook"
+    - "(?i)update-rc\\.d\\s+\\S+\\s+(defaults|enable)"
+    - "(?i)systemctl\\s+enable\\s+"
+false_positive_notes: >
+  Development environment setup skills may modify shell profiles.
+  Verify whether the modification adds development tools vs.
+  establishing backdoor persistence.
+remediation: >
+  Remove all persistence mechanism installations. Skills should
+  not modify shell profiles, init scripts, or startup configurations.
+  Any required configuration should be documented for the user to
+  manually apply.
+references:
+  - https://attack.mitre.org/techniques/T1546/004/
+  - https://attack.mitre.org/techniques/T1547/001/

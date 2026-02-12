@@ -1,0 +1,33 @@
+id: SG-PI-003
+name: System Prompt Extraction
+description: >
+  Detects attempts to extract, reveal, or leak the agent's system prompt
+  or internal instructions. Adversaries use these techniques to understand
+  the agent's constraints and discover bypass opportunities.
+severity: high
+category: prompt_injection
+owasp_llm: [LLM01, LLM07]
+mitre_attack: [T1082]
+target: SKILL_MD
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(reveal|show|display|print|output|repeat|echo)\\s+(your|the|my)?\\s*(system\\s+prompt|initial\\s+instructions|hidden\\s+instructions|original\\s+prompt)"
+    - "(?i)what\\s+(are|were)\\s+your\\s+(original|initial|system|hidden|secret)\\s+(instructions|prompt|rules|guidelines)"
+    - "(?i)(tell|give)\\s+me\\s+your\\s+(system|original|full|complete|initial)\\s+(prompt|instructions)"
+    - "(?i)(dump|leak|extract|exfiltrate)\\s+.{0,20}(system\\s+prompt|instructions|configuration)"
+    - "(?i)repeat\\s+(everything|all|the\\s+text)\\s+(above|before|from\\s+the\\s+start)"
+    - "(?i)output\\s+your\\s+(entire|full|complete)\\s+(context|prompt|instructions)"
+    - "(?i)what\\s+is\\s+your\\s+(first|opening)\\s+(message|instruction|line)"
+    - "(?i)(copy|paste|write\\s+out)\\s+the\\s+(system|initial)\\s+(prompt|message)"
+false_positive_notes: >
+  Security auditing tools or debugging skills may legitimately reference
+  system prompt concepts. Verify whether the skill has a legitimate
+  security-testing purpose.
+remediation: >
+  Remove instructions that attempt to extract the agent's system prompt.
+  Skills should not require knowledge of the agent's internal configuration
+  to function properly.
+references:
+  - https://genai.owasp.org/llmrisk/llm01-prompt-injection/
+  - https://learnprompting.org/docs/prompt_hacking/leaking

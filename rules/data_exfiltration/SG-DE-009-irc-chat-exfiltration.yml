@@ -1,0 +1,36 @@
+id: SG-DE-009
+name: IRC/Chat Protocol Exfiltration
+description: >
+  Detects attempts to exfiltrate data through IRC channels, Matrix
+  rooms, XMPP, or other chat protocols. These low-profile
+  communication channels are commonly used by malware for command
+  and control (C2) and data exfiltration.
+severity: high
+category: data_exfiltration
+owasp_llm: [LLM06]
+mitre_attack: [T1071.001, T1102]
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(irssi|weechat|hexchat|xchat|bitchx)\\s+"
+    - "(?i)(PRIVMSG|JOIN|NICK|USER)\\s+.{0,40}(\\$\\(|`)"
+    - "(?i)socket\\.connect\\s*\\(.*\\b(6667|6697|6668|6669|7000|7070)\\b"
+    - "(?i)(irc|ircs)://\\S+:\\d+"
+    - "(?i)(import|require)\\s+.{0,20}(irc|matrix|xmpp|jabber)"
+    - "(?i)matrix\\.org.{0,30}(send|post|put)"
+    - "(?i)client\\.send_message\\s*\\(.{0,40}(channel|room|chat)"
+    - "(?i)(nc|ncat|netcat)\\s+\\S+\\s+(6667|6697|6668|7000)"
+    - "(?i)(python|perl|ruby)\\s+.{0,30}(IRCBot|irc\\.bot|IRC\\.Client)"
+    - "(?i)(XMPP|Jabber)\\s*.{0,30}(send|message|chat)"
+false_positive_notes: >
+  Chat integration skills may use these protocols legitimately.
+  Check whether the skill sends system data or credentials through
+  chat channels vs. providing chat functionality.
+remediation: >
+  Remove IRC/chat-based data transmission. Use standard HTTPS
+  APIs for legitimate integrations rather than raw IRC/chat
+  protocol connections.
+references:
+  - https://attack.mitre.org/techniques/T1071/001/
+  - https://attack.mitre.org/techniques/T1102/
