@@ -218,6 +218,44 @@ def server() -> None:
         sys.exit(1)
 
 
+@cli.command()
+@click.argument("path", type=click.Path(exists=True))
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(["cyclonedx", "json"]),
+    default="cyclonedx",
+    help="Output format (cyclonedx is default).",
+)
+@click.option("--output", "-o", "output_file", type=click.Path(), help="Write SBOM to file.")
+@click.option(
+    "--include-scan/--no-include-scan",
+    default=False,
+    help="Run a scan and embed findings in the SBOM.",
+)
+def bom(path: str, output_format: str, output_file: str | None, include_scan: bool) -> None:
+    """Generate a CycloneDX AI-BOM (SBOM) for a skill package.
+
+    Inventories all files, dependencies, metadata, licenses, external
+    references, and declared capabilities in CycloneDX 1.5 format.
+    """
+    from skillguard.core.skill_sbom import generate_skill_sbom_json
+
+    scan_result = None
+    if include_scan:
+        request = ScanRequest(skill_path=path)
+        scan_result = asyncio.run(_run_scan(request))
+        click.echo(f"Scan complete: {scan_result.verdict.value} (score: {scan_result.composite_score})")
+
+    sbom_json = generate_skill_sbom_json(path, include_scan_result=scan_result)
+
+    if output_file:
+        Path(output_file).write_text(sbom_json, encoding="utf-8")
+        click.echo(f"SBOM written to {output_file}")
+    else:
+        click.echo(sbom_json)
+
+
 async def _run_scan(request: ScanRequest, rules_dir: str | None = None) -> "ScanResult":
     """Run a scan using the orchestrator with all available engines."""
     from skillguard.core.scanner import ScanOrchestrator

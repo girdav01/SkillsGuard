@@ -18,6 +18,35 @@ def get_audit_log() -> AuditLog:
     return _audit_log
 
 
+class SBOMRequest(BaseModel):
+    """Request to generate a Skill SBOM."""
+
+    skill_path: str
+    include_scan_id: str | None = None
+
+
+@router.post("/sbom")
+async def generate_sbom(request: SBOMRequest) -> dict:
+    """Generate a CycloneDX SBOM for a skill directory.
+
+    Inventories all files, dependencies, metadata, licenses,
+    external references, and declared tool capabilities.
+    Optionally embeds findings from a previous scan.
+    """
+    from skillguard.core.skill_sbom import generate_skill_sbom
+
+    scan_result = None
+    if request.include_scan_id:
+        from skillguard.api.routes.scan import _scan_results
+
+        scan_result = _scan_results.get(request.include_scan_id)
+
+    try:
+        return generate_skill_sbom(request.skill_path, include_scan_result=scan_result)
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
 @router.get("/ai-bom/{scan_id}")
 async def get_ai_bom(scan_id: str) -> dict:
     """Generate a CycloneDX AI-BOM for a completed scan."""

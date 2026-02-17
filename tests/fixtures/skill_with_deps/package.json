@@ -1,0 +1,11 @@
+{
+  "name": "data-analyzer-frontend",
+  "version": "1.0.0",
+  "dependencies": {
+    "chart.js": "^4.4.0",
+    "d3": "~7.8.5"
+  },
+  "devDependencies": {
+    "prettier": "^3.0.0"
+  }
+}
