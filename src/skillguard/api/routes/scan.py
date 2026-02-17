@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import os
+from pathlib import Path
+
 from fastapi import APIRouter, HTTPException
 
 from skillguard.api.models import ScanSubmitRequest, ScanSubmitResponse, ScanStatusResponse
@@ -25,6 +28,35 @@ router = APIRouter()
 
 # In-memory store (would be database in production)
 _scan_results: dict[str, ScanResult] = {}
+_MAX_SCAN_RESULTS = 10000
+
+# Allowed base directory for path-based operations
+_ALLOWED_BASE_DIR = os.getcwd()
+
+
+def _sanitize_path(user_path: str) -> str:
+    """Validate and resolve a user-provided path to prevent path traversal.
+
+    Raises HTTPException if the path is invalid or escapes the allowed directory.
+    """
+    if not user_path:
+        raise HTTPException(status_code=400, detail="path is required")
+
+    if ".." in user_path:
+        raise HTTPException(status_code=400, detail="path must not contain '..'")
+
+    resolved = Path(user_path).resolve()
+
+    if not str(resolved).startswith(_ALLOWED_BASE_DIR):
+        raise HTTPException(status_code=400, detail="path is outside the allowed directory")
+
+    if not resolved.exists():
+        raise HTTPException(status_code=404, detail="path not found")
+
+    if not resolved.is_dir():
+        raise HTTPException(status_code=400, detail="path must be a directory")
+
+    return str(resolved)
 
 
 def _get_orchestrator() -> ScanOrchestrator:
@@ -53,8 +85,13 @@ async def submit_scan(request: ScanSubmitRequest) -> ScanSubmitResponse:
     if not request.skill_path and not request.git_url:
         raise HTTPException(status_code=400, detail="Provide skill_path or git_url")
 
+    # Validate and sanitize the skill path to prevent path traversal
+    safe_path = request.skill_path
+    if safe_path:
+        safe_path = _sanitize_path(safe_path)
+
     scan_request = ScanRequest(
-        skill_path=request.skill_path,
+        skill_path=safe_path,
         git_url=request.git_url,
         scan_type=request.scan_type,
         platform=request.platform,
@@ -64,10 +101,15 @@ async def submit_scan(request: ScanSubmitRequest) -> ScanSubmitResponse:
 
     try:
         result = await orchestrator.scan(scan_request)
-    except FileNotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="skill path not found")
+    except ValueError:
+        raise HTTPException(status_code=400, detail="invalid scan request")
+
+    # Bounded storage with eviction
+    if len(_scan_results) >= _MAX_SCAN_RESULTS:
+        oldest_key = next(iter(_scan_results))
+        del _scan_results[oldest_key]
 
     _scan_results[result.scan_id] = result
 

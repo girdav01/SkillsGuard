@@ -39,9 +39,19 @@ SkillGuard scans AI agent skill packages with 12 parallel engines to detect prom
 
 ## Quick Start
 
+### Python
+
 ```bash
 pip install skillguard
 skillguard scan /path/to/skill
+```
+
+### Go
+
+```bash
+cd go-skillguard
+go build -o bin/skillguard ./cmd/skillguard
+./bin/skillguard scan /path/to/skill
 ```
 
 Scan a skill directory and get an instant risk verdict:
@@ -69,6 +79,8 @@ $ skillguard scan ./my-skill
 
 ## Installation
 
+### Python
+
 **Core install (all engines except YARA and ML):**
 
 ```bash
@@ -95,6 +107,27 @@ pip install "skillguard[dev]"
 ```
 
 **Requirements:** Python 3.11+
+
+### Go
+
+**Build from source:**
+
+```bash
+cd go-skillguard
+make build
+```
+
+**Or install directly:**
+
+```bash
+go install github.com/girdav01/skillguard/cmd/skillguard@latest
+```
+
+**Requirements:** Go 1.22+
+
+**Dependencies:** chi (HTTP router), cobra (CLI), yaml.v3 (YAML parsing) — no CGO required.
+
+The Go version includes the same 12 scan engines, CLI commands, REST API, governance, intelligence, monitoring, and reporting features as the Python version. Engines run in parallel via goroutines.
 
 ---
 
@@ -774,6 +807,8 @@ skillguard scan ./my-skill --platform claude_code
 
 ## Architecture
 
+Both the Python and Go implementations share the same architecture:
+
 ```
 Skill Package
     |
@@ -781,13 +816,14 @@ Skill Package
 [Skill Parser] --> Parse files, classify types, extract frontmatter
     |
     v
-[Scan Orchestrator] --> Run 12 engines in parallel via asyncio.gather
+[Scan Orchestrator] --> Run 12 engines in parallel
+    |                    (Python: asyncio.gather / Go: goroutines + sync.WaitGroup)
     |
     +--> [Regex Scanner]         87 YAML rules
     +--> [YARA Scanner]          Multi-pattern signatures
     +--> [Secret Detector]       24+ credential patterns
-    +--> [ML Classifier]         DeBERTa v3 ONNX model
-    +--> [Vector Search]         ChromaDB embeddings
+    +--> [ML Classifier]         DeBERTa v3 ONNX model (Go: heuristic fallback)
+    +--> [Vector Search]         ChromaDB embeddings (Go: keyword similarity)
     +--> [Tool Poisoning]        MCP description injection
     +--> [Tool Shadowing]        MCP name conflicts
     +--> [Config Scanner]        MCP config vulnerabilities
@@ -806,9 +842,29 @@ Skill Package
 [Reports] --> JSON, SARIF, HTML, CycloneDX SBOM
 ```
 
+### Go Project Structure
+
+```
+go-skillguard/
+├── cmd/skillguard/main.go        # Cobra CLI (scan, bom, monitor, rules, server)
+├── internal/
+│   ├── core/                     # Models, hasher, parser, rules loader, verdict, scanner
+│   ├── engines/                  # ScanEngine interface + 12 engine implementations
+│   ├── governance/               # Policy engine, RBAC, integrity-chained audit log
+│   ├── intelligence/             # Threat DB, community verdicts, MITRE ATT&CK mapper
+│   ├── monitoring/               # Drift detector
+│   ├── reporting/                # JSON, SARIF, HTML, CycloneDX SBOM, AI-BOM
+│   └── api/                      # Chi-based REST API (19 endpoints)
+├── go.mod
+├── go.sum
+└── Makefile
+```
+
 ---
 
 ## Development
+
+### Python
 
 ```bash
 # Clone and install in development mode
@@ -826,7 +882,7 @@ pytest tests/ --cov=skillguard --cov-report=html
 ruff check src/
 ```
 
-**Test coverage by module:**
+**Python test coverage by module:**
 
 | Module | Tests |
 |--------|-------|
@@ -846,6 +902,52 @@ ruff check src/
 | Phase 3 API routes | 19 |
 | Skill SBOM | 61 |
 | **Total** | **330** |
+
+### Go
+
+```bash
+cd go-skillguard
+
+# Build
+make build
+
+# Run all tests (62 tests)
+make test
+
+# Format and vet
+make fmt
+make vet
+
+# Build and test in one command
+make
+```
+
+**Go test coverage by package:**
+
+| Package | Tests |
+|---------|-------|
+| core (models, hasher, parser, verdict) | 23 |
+| engines (all 12 engines) | 20 |
+| governance (policy, RBAC, audit) | 11 |
+| intelligence (threat DB, community, MITRE) | 3 |
+| monitoring (drift detector) | 5 |
+| reporting (JSON, SARIF, HTML, AI-BOM) | 7 |
+| **Total** | **62** |
+
+### Feature Parity
+
+Both implementations share the same detection logic, risk scoring algorithm, and output formats. Key differences:
+
+| Feature | Python | Go |
+|---------|--------|-----|
+| ML Classifier | DeBERTa v3 ONNX model | Heuristic fallback (33 indicators) |
+| Vector Search | ChromaDB embeddings | Keyword similarity (20 patterns) |
+| YARA Scanner | Native via yara-python | Placeholder (no CGO) |
+| Sandbox | nsjail/Docker isolation | Placeholder |
+| HTTP Framework | FastAPI + Uvicorn | Chi router |
+| CLI Framework | Click | Cobra |
+| Parallelism | asyncio.gather | goroutines + sync.WaitGroup |
+| Package Manager | pip (PyPI) | go modules |
 
 ---
 

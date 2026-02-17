@@ -537,7 +537,8 @@ class TestSBOMAPI:
             "/api/v1/sbom",
             json={"skill_path": "/nonexistent/path"},
         )
-        assert resp.status_code == 404
+        # Path outside allowed directory is rejected as 400 (path traversal protection)
+        assert resp.status_code == 400
 
     def test_sbom_with_scan_result(self, client):
         # Submit a scan first

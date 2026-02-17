@@ -4,8 +4,12 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -17,35 +21,45 @@ import (
 	"github.com/girdav01/skillguard/internal/reporting"
 )
 
+const maxRequestBodySize = 1 << 20 // 1 MB
+const maxScanResults = 10000
+
 // Server holds the API state.
 type Server struct {
-	rulesDir     string
-	policyEngine *governance.PolicyEngine
-	rbac         *governance.RBACManager
-	auditLog     *governance.AuditLog
-	community    *intelligence.CommunityVerdicts
-	threatDB     *intelligence.ThreatIntelDB
-	mitre        *intelligence.MITREMapper
-	scanResults  map[string]*core.ScanResult
+	mu             sync.RWMutex
+	rulesDir       string
+	allowedBaseDir string
+	policyEngine   *governance.PolicyEngine
+	rbac           *governance.RBACManager
+	auditLog       *governance.AuditLog
+	community      *intelligence.CommunityVerdicts
+	threatDB       *intelligence.ThreatIntelDB
+	mitre          *intelligence.MITREMapper
+	scanResults    map[string]*core.ScanResult
+	driftDetector  *monitoring.DriftDetector
 }
 
 // StartServer starts the API server.
 func StartServer(port int, rulesDir string) error {
+	cwd, _ := os.Getwd()
 	s := &Server{
-		rulesDir:     rulesDir,
-		policyEngine: governance.NewPolicyEngine(),
-		rbac:         governance.NewRBACManager(),
-		auditLog:     governance.NewAuditLog(),
-		community:    intelligence.NewCommunityVerdicts(),
-		threatDB:     intelligence.NewThreatIntelDB(),
-		mitre:        intelligence.NewMITREMapper(),
-		scanResults:  make(map[string]*core.ScanResult),
+		rulesDir:       rulesDir,
+		allowedBaseDir: cwd,
+		policyEngine:   governance.NewPolicyEngine(),
+		rbac:           governance.NewRBACManager(),
+		auditLog:       governance.NewAuditLog(),
+		community:      intelligence.NewCommunityVerdicts(),
+		threatDB:       intelligence.NewThreatIntelDB(),
+		mitre:          intelligence.NewMITREMapper(),
+		scanResults:    make(map[string]*core.ScanResult),
+		driftDetector:  monitoring.NewDriftDetector(),
 	}
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.SetHeader("Content-Type", "application/json"))
+	r.Use(bodySizeLimiter)
 
 	// Health
 	r.Get("/health", s.handleHealth)
@@ -83,6 +97,81 @@ func StartServer(port int, rulesDir string) error {
 	return http.ListenAndServe(addr, r)
 }
 
+// bodySizeLimiter limits request body size to prevent DoS via large payloads.
+func bodySizeLimiter(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Body != nil {
+			r.Body = http.MaxBytesReader(w, r.Body, maxRequestBodySize)
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+// sanitizePath validates and resolves a user-provided path, ensuring it doesn't
+// escape the allowed base directory. Returns the cleaned absolute path or an error.
+func (s *Server) sanitizePath(userPath string) (string, error) {
+	if userPath == "" {
+		return "", fmt.Errorf("path is required")
+	}
+
+	// Reject obvious traversal attempts
+	if strings.Contains(userPath, "..") {
+		return "", fmt.Errorf("path must not contain '..'")
+	}
+
+	// Resolve to absolute path
+	absPath, err := filepath.Abs(userPath)
+	if err != nil {
+		return "", fmt.Errorf("invalid path")
+	}
+
+	// Resolve symlinks to prevent symlink-based traversal
+	resolvedPath, err := filepath.EvalSymlinks(absPath)
+	if err != nil {
+		// Path might not exist yet (e.g., baseline capture)
+		// Fall back to the cleaned absolute path
+		resolvedPath = absPath
+	}
+
+	// Verify the resolved path is within the allowed base directory
+	if !strings.HasPrefix(resolvedPath, s.allowedBaseDir) {
+		return "", fmt.Errorf("path is outside the allowed directory")
+	}
+
+	// Verify the path exists and is a directory
+	info, err := os.Stat(resolvedPath)
+	if err != nil {
+		return "", fmt.Errorf("path not found")
+	}
+	if !info.IsDir() {
+		return "", fmt.Errorf("path must be a directory")
+	}
+
+	return resolvedPath, nil
+}
+
+// storeScanResult stores a scan result with bounded cache eviction.
+func (s *Server) storeScanResult(result *core.ScanResult) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if len(s.scanResults) >= maxScanResults {
+		// Evict oldest entry
+		for k := range s.scanResults {
+			delete(s.scanResults, k)
+			break
+		}
+	}
+	s.scanResults[result.ScanID] = result
+}
+
+// getScanResult retrieves a scan result safely.
+func (s *Server) getScanResult(scanID string) (*core.ScanResult, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	r, ok := s.scanResults[scanID]
+	return r, ok
+}
+
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
 		"status":  "healthy",
@@ -113,6 +202,16 @@ func (s *Server) handleScan(w http.ResponseWriter, r *http.Request) {
 		req.Platform = "generic"
 	}
 
+	// Validate and sanitize the skill path to prevent path traversal
+	if req.SkillPath != "" {
+		safePath, err := s.sanitizePath(req.SkillPath)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "invalid skill_path: "+err.Error())
+			return
+		}
+		req.SkillPath = safePath
+	}
+
 	request := core.ScanRequest{
 		SkillPath: req.SkillPath,
 		GitURL:    req.GitURL,
@@ -124,15 +223,15 @@ func (s *Server) handleScan(w http.ResponseWriter, r *http.Request) {
 	orchestrator := core.NewScanOrchestrator(allEngines, s.threatDB)
 	result, err := orchestrator.Scan(request)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "scan failed")
 		return
 	}
 
-	s.scanResults[result.ScanID] = result
+	s.storeScanResult(result)
 	s.auditLog.Log("scan", "api", map[string]string{
-		"scan_id":   result.ScanID,
-		"skill":     result.SkillName,
-		"verdict":   string(result.Verdict),
+		"scan_id": result.ScanID,
+		"skill":   result.SkillName,
+		"verdict": string(result.Verdict),
 	})
 
 	writeJSON(w, http.StatusOK, result)
@@ -140,7 +239,7 @@ func (s *Server) handleScan(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleGetScan(w http.ResponseWriter, r *http.Request) {
 	scanID := chi.URLParam(r, "scanID")
-	result, ok := s.scanResults[scanID]
+	result, ok := s.getScanResult(scanID)
 	if !ok {
 		writeError(w, http.StatusNotFound, "scan not found")
 		return
@@ -189,7 +288,7 @@ func (s *Server) handleDeletePolicy(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleEvaluatePolicy(w http.ResponseWriter, r *http.Request) {
 	scanID := chi.URLParam(r, "scanID")
-	result, ok := s.scanResults[scanID]
+	result, ok := s.getScanResult(scanID)
 	if !ok {
 		writeError(w, http.StatusNotFound, "scan not found")
 		return
@@ -238,7 +337,7 @@ func (s *Server) handleAddComment(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleGetAIBOM(w http.ResponseWriter, r *http.Request) {
 	scanID := chi.URLParam(r, "scanID")
-	result, ok := s.scanResults[scanID]
+	result, ok := s.getScanResult(scanID)
 	if !ok {
 		writeError(w, http.StatusNotFound, "scan not found")
 		return
@@ -261,14 +360,21 @@ func (s *Server) handleGenerateSBOM(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var scanResult *core.ScanResult
-	if req.IncludeScanID != "" {
-		scanResult = s.scanResults[req.IncludeScanID]
+	// Validate and sanitize the skill path to prevent path traversal
+	safePath, err := s.sanitizePath(req.SkillPath)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid skill_path: "+err.Error())
+		return
 	}
 
-	sbom, err := reporting.GenerateSkillSBOM(req.SkillPath, scanResult)
+	var scanResult *core.ScanResult
+	if req.IncludeScanID != "" {
+		scanResult, _ = s.getScanResult(req.IncludeScanID)
+	}
+
+	sbom, err := reporting.GenerateSkillSBOM(safePath, scanResult)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "SBOM generation failed")
 		return
 	}
 	writeJSON(w, http.StatusOK, sbom)
@@ -298,15 +404,13 @@ func (s *Server) handleVerifyAudit(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleExportAudit(w http.ResponseWriter, r *http.Request) {
 	data, err := s.auditLog.Export()
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "export failed")
 		return
 	}
 	w.Header().Set("Content-Disposition", "attachment; filename=audit_log.json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(data)
 }
-
-var driftDetector = monitoring.NewDriftDetector()
 
 func (s *Server) handleCaptureBaseline(w http.ResponseWriter, r *http.Request) {
 	var req struct {
@@ -316,8 +420,16 @@ func (s *Server) handleCaptureBaseline(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "invalid request")
 		return
 	}
-	if err := driftDetector.CaptureBaseline(req.Path); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+
+	// Validate and sanitize the path to prevent path traversal
+	safePath, err := s.sanitizePath(req.Path)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid path: "+err.Error())
+		return
+	}
+
+	if err := s.driftDetector.CaptureBaseline(safePath); err != nil {
+		writeError(w, http.StatusInternalServerError, "baseline capture failed")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "baseline captured"})
@@ -331,7 +443,15 @@ func (s *Server) handleCheckDrift(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "invalid request")
 		return
 	}
-	drift := driftDetector.CheckDrift(req.Path)
+
+	// Validate and sanitize the path to prevent path traversal
+	safePath, err := s.sanitizePath(req.Path)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid path: "+err.Error())
+		return
+	}
+
+	drift := s.driftDetector.CheckDrift(safePath)
 	writeJSON(w, http.StatusOK, drift)
 }
 
@@ -362,5 +482,8 @@ func writeError(w http.ResponseWriter, status int, msg string) {
 	json.NewEncoder(w).Encode(map[string]string{"error": msg})
 }
 
-// Ensure strings is used
+// Ensure imports are used
 var _ = strings.Contains
+var _ = io.Discard
+var _ = filepath.Base
+var _ = os.Getwd
