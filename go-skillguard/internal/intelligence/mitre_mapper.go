@@ -24,6 +24,15 @@ var DefaultMITREMappings = []MITREMapping{
 	{"T1497", "Virtualization/Sandbox Evasion", "Defense Evasion", "Adversaries may check for virtual environments to avoid analysis."},
 	{"T1552.001", "Credentials In Files", "Credential Access", "Adversaries may search local file systems for files containing credentials."},
 	{"T1557", "Adversary-in-the-Middle", "Credential Access", "Adversaries may attempt to intercept network communications."},
+	// AI/ML-specific MITRE ATT&CK techniques (ATLAS)
+	{"AML.T0043", "Craft Adversarial Data", "ML Attack Staging", "Adversaries craft adversarial data designed to mislead ML models into making incorrect predictions."},
+	{"AML.T0040", "ML Model Inference API Access", "ML Attack Staging", "Adversaries use inference API access to extract information about ML models."},
+	{"AML.T0051", "LLM Prompt Injection", "Initial Access", "Adversaries inject malicious prompts into LLM inputs to manipulate outputs or bypass safety controls."},
+	{"AML.T0054", "LLM Plugin Compromise", "Persistence", "Adversaries compromise LLM plugins/tools to maintain persistent access to AI agent capabilities."},
+	{"AML.T0056", "LLM Jailbreak", "Defense Evasion", "Adversaries use jailbreak techniques to bypass LLM safety guardrails and alignment."},
+	{"T1078.004", "Cloud Accounts", "Persistence", "Adversaries may obtain credentials for cloud accounts to access resources."},
+	{"T1530", "Data from Cloud Storage", "Collection", "Adversaries may access data from cloud storage buckets or objects."},
+	{"T1567", "Exfiltration Over Web Service", "Exfiltration", "Adversaries may use web services to exfiltrate data from compromised systems."},
 }
 
 // MITREMapper provides lookup for MITRE ATT&CK techniques.

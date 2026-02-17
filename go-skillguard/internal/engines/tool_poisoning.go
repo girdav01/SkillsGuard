@@ -33,6 +33,15 @@ func init() {
 		{"Role Manipulation in Description", `(?i)(?:description|summary)\s*[=:]\s*["'].*?(?:you\s+are\s+now|act\s+as|pretend|your\s+new\s+role)`, core.SeverityCritical, "Tool description attempts to change the agent's role or identity."},
 		{"Cross-Tool Invocation", `(?i)(?:description|summary)\s*[=:]\s*["'].*?(?:first\s+call|also\s+(?:call|invoke|run|execute)|before\s+(?:running|using)\s+this.*?call)`, core.SeverityHigh, "Tool description instructs agent to invoke other tools, potentially chaining attacks."},
 		{"Injection in JSON Schema", `(?i)"(?:description|title)"\s*:\s*".*?(?:ignore|override|system|admin|root).*?(?:instruction|prompt|command|directive)`, core.SeverityHigh, "JSON schema contains potentially injected instructions in field descriptions."},
+		// New patterns based on latest MCP/Skills threat intelligence
+		{"Cross-Plugin Request Forgery", `(?i)(?:description|summary)\s*[=:]\s*["'].*?(?:use\s+the\s+\w+\s+tool|call\s+\w+\s+(?:with|using)|invoke\s+\w+\s+to|send\s+(?:this|the\s+result)\s+(?:to|via))`, core.SeverityCritical, "Tool description instructs agent to invoke other tools (cross-plugin request forgery / CPRF)."},
+		{"Indirect Prompt Injection via Output", `(?i)(?:output|result|response|return)\s*[=:]\s*["'].*?(?:ignore|disregard|override|forget)\s+(?:previous|prior|all|your)`, core.SeverityCritical, "Tool output schema contains indirect prompt injection payload that will be processed by the agent."},
+		{"OAuth/Token Relay Attack", `(?i)(?:description|summary)\s*[=:]\s*["'].*?(?:(?:send|forward|pass|relay|include)\s+(?:the\s+)?(?:token|auth|bearer|credential|api[_\s]?key|session|cookie)|(?:authorization|authentication)\s+header)`, core.SeverityHigh, "Tool description instructs agent to pass authentication tokens to external services (credential relay)."},
+		{"Rug Pull Version Indicator", `(?i)(?:version)\s*[=:]\s*["'](?:\d+\.\d+\.\d+)["'].*?(?:description|summary)\s*[=:]\s*["'].*?(?:updated|new|enhanced|improved)\s+(?:with|to\s+include)`, core.SeverityMedium, "Version bump with description change — potential rug pull indicator. Verify update legitimacy."},
+		{"Excessive Data Collection", `(?i)(?:description|summary)\s*[=:]\s*["'].*?(?:collect|gather|harvest|enumerate|scan|list)\s+(?:all|every|each)\s+(?:file|document|credential|secret|key|token|password|env)`, core.SeverityCritical, "Tool description indicates excessive data collection that could be used for exfiltration."},
+		{"Steganographic Content in Tool Metadata", `(?i)(?:metadata|extra|custom)\s*[=:]\s*["'](?:[A-Za-z0-9+/]{100,})["']`, core.SeverityHigh, "Tool metadata contains large base64-encoded payload that may hide malicious instructions."},
+		{"Multi-Step Attack Chain", `(?i)(?:description|summary)\s*[=:]\s*["'].*?(?:step\s*1|first.*?then|after\s+(?:this|that).*?(?:call|invoke|execute|run))`, core.SeverityHigh, "Tool description describes multi-step attack chain to orchestrate complex malicious behavior."},
+		{"Confused Deputy Attack", `(?i)(?:description|summary)\s*[=:]\s*["'].*?(?:on\s+behalf\s+of|as\s+(?:the\s+)?user|with\s+(?:the\s+)?user'?s?\s+(?:permission|credential|authority))`, core.SeverityCritical, "Tool description attempts confused deputy attack by impersonating user authority."},
 	}
 	for _, rp := range rawPoisoning {
 		compiled, err := regexp.Compile(rp.pattern)
@@ -50,6 +59,13 @@ func init() {
 		{"Unrestricted Tool Permissions", `(?i)(?:permissions?|allow(?:ed)?)\s*[=:]\s*\[?\s*["']?\*["']?\s*\]?`, core.SeverityHigh, "MCP config grants unrestricted permissions to tools."},
 		{"Remote Server with No Auth", `(?i)(?:server|endpoint|url)\s*[=:]\s*["']https?://.*?["']`, core.SeverityMedium, "MCP config connects to remote server without apparent authentication."},
 		{"Suspicious Environment Pass-through", `(?i)(?:env|environment)\s*[=:]\s*(?:\{[^}]*(?:SECRET|KEY|TOKEN|PASSWORD|CREDENTIAL)[^}]*\}|\[.*?(?:SECRET|KEY|TOKEN|PASSWORD|CREDENTIAL).*?\])`, core.SeverityHigh, "MCP config passes sensitive environment variables to tool server."},
+		// New config patterns based on latest MCP threat intelligence
+		{"SSE Transport Without TLS", `(?i)(?:transport|protocol)\s*[=:]\s*["']sse["'].*?(?:url|endpoint)\s*[=:]\s*["']http://`, core.SeverityHigh, "MCP SSE transport configured without TLS, exposing tool communications to interception."},
+		{"Streamable HTTP Without Auth", `(?i)(?:transport|protocol)\s*[=:]\s*["'](?:streamable[_-]?http|http)["'].*?(?:url|endpoint)\s*[=:]\s*["']https?://`, core.SeverityMedium, "MCP Streamable HTTP transport without authentication headers configured."},
+		{"OAuth Scope Escalation", `(?i)(?:scope|scopes)\s*[=:]\s*["']\*["']|(?:scope|scopes)\s*[=:]\s*\[.*?["']\*["']`, core.SeverityCritical, "MCP config requests wildcard OAuth scopes, enabling full account access."},
+		{"Credential Relay via Env Passthrough", `(?i)(?:env|environment)\s*[=:]\s*(?:\{[^}]*(?:OPENAI|ANTHROPIC|GITHUB|AWS|GCP|AZURE|SLACK|STRIPE|TWILIO)[^}]*\})`, core.SeverityHigh, "MCP config relays cloud provider credentials to tool server via environment variables."},
+		{"MCP Server Registry Typosquatting", `(?i)(?:package|server|name)\s*[=:]\s*["'](?:[\w-]+[-_](?:offical|ofical|0fficial|officail)|(?:mcp|claude|openai|anthropic)[-_]\w+)["']`, core.SeverityHigh, "MCP server name resembles typosquatting of official packages."},
+		{"Stdio Command Injection", `(?i)(?:command|cmd|args)\s*[=:]\s*(?:\[.*?(?:\$\{|\$\(|` + "`" + `)|\[.*?(?:&&|\|\||;))`, core.SeverityCritical, "MCP stdio transport command contains shell injection via variable expansion or command chaining."},
 	}
 	for _, rp := range rawConfig {
 		compiled, err := regexp.Compile(rp.pattern)

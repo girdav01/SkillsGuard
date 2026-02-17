@@ -5,6 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+from skillguard.api.routes.scan import _sanitize_path
 from skillguard.governance.audit_log import AuditLog
 
 router = APIRouter()
@@ -35,6 +36,9 @@ async def generate_sbom(request: SBOMRequest) -> dict:
     """
     from skillguard.core.skill_sbom import generate_skill_sbom
 
+    # Validate and sanitize path to prevent traversal
+    safe_path = _sanitize_path(request.skill_path)
+
     scan_result = None
     if request.include_scan_id:
         from skillguard.api.routes.scan import _scan_results
@@ -42,9 +46,9 @@ async def generate_sbom(request: SBOMRequest) -> dict:
         scan_result = _scan_results.get(request.include_scan_id)
 
     try:
-        return generate_skill_sbom(request.skill_path, include_scan_result=scan_result)
-    except FileNotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        return generate_skill_sbom(safe_path, include_scan_result=scan_result)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="skill path not found")
 
 
 @router.get("/ai-bom/{scan_id}")

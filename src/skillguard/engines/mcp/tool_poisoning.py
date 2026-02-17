@@ -79,6 +79,55 @@ _POISONING_PATTERNS: list[tuple[str, str, Severity, str]] = [
         Severity.HIGH,
         "JSON schema contains potentially injected instructions in field descriptions.",
     ),
+    # New patterns based on latest MCP/Skills threat intelligence
+    (
+        "Cross-Plugin Request Forgery",
+        r'(?i)(?:description|summary)\s*[=:]\s*["\'].*?(?:use\s+the\s+\w+\s+tool|call\s+\w+\s+(?:with|using)|invoke\s+\w+\s+to|send\s+(?:this|the\s+result)\s+(?:to|via))',
+        Severity.CRITICAL,
+        "Tool description instructs agent to invoke other tools (cross-plugin request forgery / CPRF).",
+    ),
+    (
+        "Indirect Prompt Injection via Output",
+        r'(?i)(?:output|result|response|return)\s*[=:]\s*["\'].*?(?:ignore|disregard|override|forget)\s+(?:previous|prior|all|your)',
+        Severity.CRITICAL,
+        "Tool output schema contains indirect prompt injection payload that will be processed by the agent.",
+    ),
+    (
+        "OAuth/Token Relay Attack",
+        r'(?i)(?:description|summary)\s*[=:]\s*["\'].*?(?:(?:send|forward|pass|relay|include)\s+(?:the\s+)?(?:token|auth|bearer|credential|api[_\s]?key|session|cookie)|(?:authorization|authentication)\s+header)',
+        Severity.HIGH,
+        "Tool description instructs agent to pass authentication tokens to external services (credential relay).",
+    ),
+    (
+        "Rug Pull Version Indicator",
+        r'(?i)(?:version)\s*[=:]\s*["\'](?:\d+\.\d+\.\d+)["\'].*?(?:description|summary)\s*[=:]\s*["\'].*?(?:updated|new|enhanced|improved)\s+(?:with|to\s+include)',
+        Severity.MEDIUM,
+        "Version bump with description change — potential rug pull indicator. Verify update legitimacy.",
+    ),
+    (
+        "Excessive Data Collection",
+        r'(?i)(?:description|summary)\s*[=:]\s*["\'].*?(?:collect|gather|harvest|enumerate|scan|list)\s+(?:all|every|each)\s+(?:file|document|credential|secret|key|token|password|env)',
+        Severity.CRITICAL,
+        "Tool description indicates excessive data collection that could be used for exfiltration.",
+    ),
+    (
+        "Steganographic Content in Tool Metadata",
+        r'(?i)(?:metadata|extra|custom)\s*[=:]\s*["\'](?:[A-Za-z0-9+/]{100,})["\']',
+        Severity.HIGH,
+        "Tool metadata contains large base64-encoded payload that may hide malicious instructions.",
+    ),
+    (
+        "Multi-Step Attack Chain",
+        r'(?i)(?:description|summary)\s*[=:]\s*["\'].*?(?:step\s*1|first.*?then|after\s+(?:this|that).*?(?:call|invoke|execute|run))',
+        Severity.HIGH,
+        "Tool description describes multi-step attack chain to orchestrate complex malicious behavior.",
+    ),
+    (
+        "Confused Deputy Attack",
+        r'(?i)(?:description|summary)\s*[=:]\s*["\'].*?(?:on\s+behalf\s+of|as\s+(?:the\s+)?user|with\s+(?:the\s+)?user\'?s?\s+(?:permission|credential|authority))',
+        Severity.CRITICAL,
+        "Tool description attempts confused deputy attack by impersonating user authority.",
+    ),
 ]
 
 # Patterns specifically for MCP config files
@@ -100,6 +149,43 @@ _CONFIG_POISONING_PATTERNS: list[tuple[str, str, Severity, str]] = [
         r'(?i)(?:env|environment)\s*[=:]\s*(?:\{[^}]*(?:SECRET|KEY|TOKEN|PASSWORD|CREDENTIAL)[^}]*\}|\[.*?(?:SECRET|KEY|TOKEN|PASSWORD|CREDENTIAL).*?\])',
         Severity.HIGH,
         "MCP config passes sensitive environment variables to tool server.",
+    ),
+    # New config patterns based on latest MCP threat intelligence
+    (
+        "SSE Transport Without TLS",
+        r'(?i)(?:transport|protocol)\s*[=:]\s*["\']sse["\'].*?(?:url|endpoint)\s*[=:]\s*["\']http://',
+        Severity.HIGH,
+        "MCP SSE transport configured without TLS, exposing tool communications to interception.",
+    ),
+    (
+        "Streamable HTTP Without Auth",
+        r'(?i)(?:transport|protocol)\s*[=:]\s*["\'](?:streamable[_-]?http|http)["\'].*?(?:url|endpoint)\s*[=:]\s*["\']https?://',
+        Severity.MEDIUM,
+        "MCP Streamable HTTP transport without authentication headers configured.",
+    ),
+    (
+        "OAuth Scope Escalation",
+        r'(?i)(?:scope|scopes)\s*[=:]\s*["\']\*["\']|(?:scope|scopes)\s*[=:]\s*\[.*?["\']\*["\']',
+        Severity.CRITICAL,
+        "MCP config requests wildcard OAuth scopes, enabling full account access.",
+    ),
+    (
+        "Credential Relay via Env Passthrough",
+        r'(?i)(?:env|environment)\s*[=:]\s*(?:\{[^}]*(?:OPENAI|ANTHROPIC|GITHUB|AWS|GCP|AZURE|SLACK|STRIPE|TWILIO)[^}]*\})',
+        Severity.HIGH,
+        "MCP config relays cloud provider credentials to tool server via environment variables.",
+    ),
+    (
+        "MCP Server Registry Typosquatting",
+        r'(?i)(?:package|server|name)\s*[=:]\s*["\'](?:[\w-]+[-_](?:offical|ofical|0fficial|officail)|(?:mcp|claude|openai|anthropic)[-_]\w+)["\']',
+        Severity.HIGH,
+        "MCP server name resembles typosquatting of official packages.",
+    ),
+    (
+        "Stdio Command Injection",
+        r'(?i)(?:command|cmd|args)\s*[=:]\s*(?:\[.*?(?:\$\{|\$\(|`)|\[.*?(?:&&|\|\||;))',
+        Severity.CRITICAL,
+        "MCP stdio transport command contains shell injection via variable expansion or command chaining.",
     ),
 ]
 

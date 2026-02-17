@@ -51,7 +51,8 @@ class TestScanEndpoint:
             "/api/v1/scan",
             json={"skill_path": "/nonexistent/path"},
         )
-        assert resp.status_code == 404
+        # Path outside allowed directory is rejected as 400 (path traversal protection)
+        assert resp.status_code == 400
 
     def test_get_scan_result(self, client: TestClient):
         # Submit scan first

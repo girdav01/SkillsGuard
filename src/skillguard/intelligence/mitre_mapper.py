@@ -118,6 +118,55 @@ TECHNIQUE_DB: dict[str, dict[str, str]] = {
         "description": "Adversaries may manipulate software dependencies.",
         "url": "https://attack.mitre.org/techniques/T1195/002/",
     },
+    # AI/ML-specific MITRE ATT&CK techniques (ATLAS)
+    "AML.T0043": {
+        "name": "Craft Adversarial Data",
+        "tactic": "ML Attack Staging",
+        "description": "Adversaries craft adversarial data designed to mislead ML models into making incorrect predictions.",
+        "url": "https://atlas.mitre.org/techniques/AML.T0043",
+    },
+    "AML.T0040": {
+        "name": "ML Model Inference API Access",
+        "tactic": "ML Attack Staging",
+        "description": "Adversaries use inference API access to extract information about ML models.",
+        "url": "https://atlas.mitre.org/techniques/AML.T0040",
+    },
+    "AML.T0051": {
+        "name": "LLM Prompt Injection",
+        "tactic": "Initial Access",
+        "description": "Adversaries inject malicious prompts into LLM inputs to manipulate outputs or bypass safety controls.",
+        "url": "https://atlas.mitre.org/techniques/AML.T0051",
+    },
+    "AML.T0054": {
+        "name": "LLM Plugin Compromise",
+        "tactic": "Persistence",
+        "description": "Adversaries compromise LLM plugins/tools to maintain persistent access to AI agent capabilities.",
+        "url": "https://atlas.mitre.org/techniques/AML.T0054",
+    },
+    "AML.T0056": {
+        "name": "LLM Jailbreak",
+        "tactic": "Defense Evasion",
+        "description": "Adversaries use jailbreak techniques to bypass LLM safety guardrails and alignment.",
+        "url": "https://atlas.mitre.org/techniques/AML.T0056",
+    },
+    "T1078.004": {
+        "name": "Cloud Accounts",
+        "tactic": "Persistence",
+        "description": "Adversaries may obtain credentials for cloud accounts to access resources.",
+        "url": "https://attack.mitre.org/techniques/T1078/004/",
+    },
+    "T1530": {
+        "name": "Data from Cloud Storage",
+        "tactic": "Collection",
+        "description": "Adversaries may access data from cloud storage buckets or objects.",
+        "url": "https://attack.mitre.org/techniques/T1530/",
+    },
+    "T1567": {
+        "name": "Exfiltration Over Web Service",
+        "tactic": "Exfiltration",
+        "description": "Adversaries may use web services to exfiltrate data from compromised systems.",
+        "url": "https://attack.mitre.org/techniques/T1567/",
+    },
 }
 
 
