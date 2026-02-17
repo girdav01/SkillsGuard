@@ -1,7 +1,6 @@
 # SkillGuard
 
-**VirusTotal for AI Agent Skills** - Multi-engine security scanner for AI skills, MCP servers, and agentic tool definitions.
-
+**Multi-engine security scanner for AI skills, MCP servers, and agentic tool definitions.s**
 SkillGuard scans AI agent skill packages with 12 parallel engines to detect prompt injection, credential theft, code execution, data exfiltration, obfuscation, and MCP-specific attacks. It produces risk-scored verdicts, CycloneDX SBOMs, and maps findings to OWASP LLM Top 10 and MITRE ATT&CK frameworks.
 
 ---
@@ -50,7 +49,7 @@ Scan a skill directory and get an instant risk verdict:
 ```
 $ skillguard scan ./my-skill
 
-  SkillGuard - VirusTotal for AI Agent Skills
+  SkillGuard - AI Agent Skills Scanner 
   ============================================
 
   Skill: my-skill
