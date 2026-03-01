@@ -2,7 +2,7 @@
 
 **Multi-engine security scanner for AI skills, MCP servers, and agentic tool definitions.s**
 SkillGuard scans AI agent skill packages with 12 parallel engines to detect prompt injection, credential theft, code execution, data exfiltration, obfuscation, and MCP-specific attacks. It produces risk-scored verdicts, CycloneDX SBOMs, and maps findings to OWASP LLM Top 10 and MITRE ATT&CK frameworks.
-
+![App screenshot](./images/screenshot.png)
 ---
 
 ## Table of Contents
