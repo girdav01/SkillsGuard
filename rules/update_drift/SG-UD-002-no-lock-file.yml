@@ -1,0 +1,30 @@
+id: SG-UD-002
+name: No Lock File Indicator
+description: >
+  Detects dependency files without corresponding lock files. Lock files
+  ensure deterministic dependency resolution and prevent silent updates.
+  Without a lock file, builds may pull different dependency versions
+  across environments, creating inconsistency and supply chain risk.
+severity: medium
+category: update_drift
+owasp_llm: [LLM05]
+owasp_ast: [AST07]
+mitre_attack: []
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(requirements\\.txt|Pipfile|package\\.json|go\\.sum)"
+false_positive_notes: >
+  This is a heuristic indicator that flags the presence of dependency
+  manifest files. The actual check for a missing lock file requires
+  filesystem-level analysis. This rule should be used as a trigger for
+  further investigation rather than a definitive finding.
+remediation: >
+  Generate and commit lock files alongside dependency manifests. Use
+  pip freeze > requirements.txt, pipenv lock, npm ci with
+  package-lock.json, or go mod tidy with go.sum. Ensure CI/CD pipelines
+  install from lock files rather than resolving dependencies dynamically.
+references:
+  - https://docs.npmjs.com/cli/v9/configuring-npm/package-lock-json
+  - https://pip.pypa.io/en/stable/topics/repeatable-installs/

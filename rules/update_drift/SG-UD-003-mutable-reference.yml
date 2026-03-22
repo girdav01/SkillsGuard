@@ -1,0 +1,32 @@
+id: SG-UD-003
+name: Mutable Git Reference
+description: >
+  Detects dependencies that reference mutable Git branches such as main,
+  master, develop, or dev instead of pinned commits or tags. Mutable
+  references can change without notice, allowing attackers to inject
+  malicious code into a dependency without altering the reference URL.
+severity: high
+category: update_drift
+owasp_llm: [LLM05]
+owasp_ast: [AST07]
+mitre_attack: [T1195.002]
+target: CONFIG
+engine: REGEX
+pattern:
+  any:
+    - "(?i)git\\+https?://[^\\s]+@(?:main|master|develop|dev)\\b"
+    - "(?i)\"[^\"]*github\\.com[^\"]*#(?:main|master|develop|dev)\""
+    - "(?i)git://[^\\s]+(?:\\.git)?\\s"
+false_positive_notes: >
+  Development environments may intentionally track branch heads for
+  rapid iteration. This rule is most critical for production dependency
+  specifications. Verify the context and deployment stage before
+  treating as a true positive.
+remediation: >
+  Pin Git dependencies to specific commit SHAs or immutable tags rather
+  than branch names. For example, use git+https://github.com/org/repo@abc123
+  instead of git+https://github.com/org/repo@main. Verify tag integrity
+  using signed tags or commit signature verification.
+references:
+  - https://attack.mitre.org/techniques/T1195/002/
+  - https://pip.pypa.io/en/stable/topics/vcs-support/

@@ -3,6 +3,7 @@ package engines
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -34,6 +35,16 @@ func (s *SchemaValidator) Scan(skillFiles []core.SkillFile, rules []core.Detecti
 		}
 		if sf.FileType == core.FileTypeSkillMD {
 			findings = append(findings, s.validateSkillMD(sf)...)
+		}
+	}
+
+	// Check deserialization safety for script files
+	for _, sf := range skillFiles {
+		if sf.Content == nil {
+			continue
+		}
+		if sf.FileType == core.FileTypeScriptPython || sf.FileType == core.FileTypeScriptBash || sf.FileType == core.FileTypeScriptJS || sf.FileType == core.FileTypeScriptTS {
+			findings = append(findings, s.checkDeserializationSafety(sf)...)
 		}
 	}
 
@@ -118,5 +129,70 @@ func (s *SchemaValidator) validateSkillMD(sf core.SkillFile) []core.Finding {
 			Remediation: &remediation,
 		})
 	}
+	return findings
+}
+
+func (s *SchemaValidator) checkDeserializationSafety(sf core.SkillFile) []core.Finding {
+	var findings []core.Finding
+	content := *sf.Content
+
+	// SG-STRUCT-DS-001: Unsafe XML parsing
+	xmlPattern := regexp.MustCompile(`(?i)(xml\.etree\.ElementTree|xml\.dom\.minidom|xml\.sax|lxml\.etree)`)
+	defusedPattern := regexp.MustCompile(`(?i)defusedxml`)
+	for _, match := range xmlPattern.FindAllStringIndex(content, -1) {
+		// Check if defusedxml appears on the same line
+		lineStart := strings.LastIndex(content[:match[0]], "\n") + 1
+		lineEnd := strings.Index(content[match[1]:], "\n")
+		if lineEnd < 0 {
+			lineEnd = len(content)
+		} else {
+			lineEnd += match[1]
+		}
+		line := content[lineStart:lineEnd]
+		if defusedPattern.MatchString(line) {
+			continue
+		}
+		lineNum := strings.Count(content[:match[0]], "\n") + 1
+		snippet := content[match[0]:match[1]]
+		remediation := "Use defusedxml instead of standard XML parsers to prevent XXE attacks."
+		findings = append(findings, core.Finding{
+			RuleID:      "SG-STRUCT-DS-001",
+			RuleName:    "Unsafe XML Parsing",
+			Severity:    core.SeverityHigh,
+			Category:    "structural",
+			Description: fmt.Sprintf("Unsafe XML parser '%s' used without defusedxml. Vulnerable to XML external entity (XXE) attacks.", snippet),
+			FilePath:    sf.Path,
+			LineStart:   &lineNum,
+			Snippet:     &snippet,
+			OWASPAST:    []string{"AST05"},
+			Confidence:  0.85,
+			Remediation: &remediation,
+		})
+	}
+
+	// SG-STRUCT-DS-002: JSON with code execution hooks
+	jsonHookPattern := regexp.MustCompile(`(?i)json\.loads?\s*\(.*object_hook|jsonpickle\.decode`)
+	for _, match := range jsonHookPattern.FindAllStringIndex(content, -1) {
+		lineNum := strings.Count(content[:match[0]], "\n") + 1
+		snippet := content[match[0]:match[1]]
+		if len(snippet) > 200 {
+			snippet = snippet[:200]
+		}
+		remediation := "Avoid using object_hook with untrusted data. Do not use jsonpickle for untrusted input."
+		findings = append(findings, core.Finding{
+			RuleID:      "SG-STRUCT-DS-002",
+			RuleName:    "JSON Code Execution Hook",
+			Severity:    core.SeverityHigh,
+			Category:    "structural",
+			Description: "JSON deserialization with code execution hooks detected. This can lead to arbitrary code execution via crafted payloads.",
+			FilePath:    sf.Path,
+			LineStart:   &lineNum,
+			Snippet:     &snippet,
+			OWASPAST:    []string{"AST05"},
+			Confidence:  0.80,
+			Remediation: &remediation,
+		})
+	}
+
 	return findings
 }

@@ -1,0 +1,31 @@
+id: SG-IS-004
+name: Sensitive Port Exposure
+description: >
+  Detects container configurations that expose sensitive service ports
+  such as SSH (22), databases (3306, 5432, 6379, 27017), Docker API
+  (2375/2376), Elasticsearch (9200), or Kibana (5601). Exposing these
+  ports increases the attack surface and may allow unauthorized access
+  to critical services.
+severity: high
+category: isolation
+owasp_llm: [LLM06]
+owasp_ast: [AST06]
+mitre_attack: [T1190]
+target: CONFIG
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(?:EXPOSE|ports:)\\s*.*(?:22|3306|5432|6379|27017|2375|2376|9200|5601)\\b"
+false_positive_notes: >
+  Database containers and monitoring tools legitimately expose these
+  ports. Verify that the exposed ports are intentional and that access
+  is restricted through network policies, firewalls, or authentication
+  mechanisms.
+remediation: >
+  Avoid exposing sensitive ports directly. Use internal Docker networks
+  for inter-container communication. If port exposure is required, bind
+  to localhost (127.0.0.1) rather than all interfaces, and enforce
+  authentication and TLS for all exposed services.
+references:
+  - https://attack.mitre.org/techniques/T1190/
+  - https://docs.docker.com/engine/reference/run/#expose-incoming-ports

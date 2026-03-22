@@ -1,0 +1,32 @@
+id: SG-XP-002
+name: Incompatible Permission Model
+description: >
+  Detects permission declarations that use platform-specific syntax
+  such as allow_commands, server_commands, or tool_permissions. These
+  directives are not portable across agentic platforms and may be
+  silently ignored, leading to unexpected privilege escalation or
+  denial of required capabilities on other platforms.
+severity: medium
+category: cross_platform
+owasp_llm: [LLM06]
+owasp_ast: [AST10]
+mitre_attack: []
+target: SKILL_MD
+engine: REGEX
+pattern:
+  any:
+    - "(?i)allow_commands\\s*:"
+    - "(?i)server_commands\\s*:"
+    - "(?i)tool_permissions\\s*:"
+false_positive_notes: >
+  Skills targeting a single platform may intentionally use that
+  platform's native permission model. Review whether the skill is
+  expected to run on multiple platforms before treating as a true
+  positive.
+remediation: >
+  Use a standardized permission declaration format that is recognized
+  across target platforms. Document platform-specific permission
+  requirements separately and provide a mapping to each platform's
+  native permission model.
+references:
+  - https://owasp.org/www-project-agentic-skills-top-10

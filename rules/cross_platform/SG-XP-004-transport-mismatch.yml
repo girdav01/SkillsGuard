@@ -1,0 +1,32 @@
+id: SG-XP-004
+name: Transport Layer Mismatch
+description: >
+  Detects hardcoded transport layer configurations such as stdio or SSE
+  transport declarations. Skills that hardcode a specific transport
+  mechanism may be incompatible with platforms that require a different
+  transport, leading to connection failures or degraded functionality.
+severity: medium
+category: cross_platform
+owasp_llm: [LLM06]
+owasp_ast: [AST10]
+mitre_attack: []
+target: CONFIG
+engine: REGEX
+pattern:
+  any:
+    - "(?i)transport:\\s*stdio"
+    - "(?i)transport:\\s*sse"
+    - "(?i)StdioServerTransport"
+    - "(?i)SSEServerTransport"
+false_positive_notes: >
+  Skills designed for a single deployment model may legitimately
+  hardcode their transport. This rule is most relevant when the skill
+  is expected to operate across platforms with different transport
+  requirements.
+remediation: >
+  Make the transport layer configurable rather than hardcoded. Support
+  multiple transport mechanisms and allow the platform to negotiate
+  the appropriate transport at runtime. Use environment variables or
+  configuration files to specify the transport type.
+references:
+  - https://owasp.org/www-project-agentic-skills-top-10
