@@ -78,6 +78,7 @@ func loadRuleFile(path string) (*DetectionRule, error) {
 		Severity:    Severity(getStringDefault(raw, "severity", "medium")),
 		Category:    getStringDefault(raw, "category", "unknown"),
 		OWASPLLM:    getStringSlice(raw, "owasp_llm"),
+		OWASPAST:    getStringSlice(raw, "owasp_ast"),
 		MITREAttack: getStringSlice(raw, "mitre_attack"),
 		Target:      getStringDefault(raw, "target", "ANY"),
 		Engine:      getStringDefault(raw, "engine", "REGEX"),

@@ -167,6 +167,42 @@ TECHNIQUE_DB: dict[str, dict[str, str]] = {
         "description": "Adversaries may use web services to exfiltrate data from compromised systems.",
         "url": "https://attack.mitre.org/techniques/T1567/",
     },
+    "T1036": {
+        "name": "Masquerading",
+        "tactic": "Defense Evasion",
+        "description": "Adversaries may masquerade as legitimate entities to gain trust.",
+        "url": "https://attack.mitre.org/techniques/T1036/",
+    },
+    "T1036.005": {
+        "name": "Match Legitimate Name or Location",
+        "tactic": "Defense Evasion",
+        "description": "Adversaries may match or approximate names of legitimate entities.",
+        "url": "https://attack.mitre.org/techniques/T1036/005/",
+    },
+    "T1190": {
+        "name": "Exploit Public-Facing Application",
+        "tactic": "Initial Access",
+        "description": "Adversaries may exploit vulnerabilities in public-facing applications.",
+        "url": "https://attack.mitre.org/techniques/T1190/",
+    },
+    "T1610": {
+        "name": "Deploy Container",
+        "tactic": "Defense Evasion",
+        "description": "Adversaries may deploy containers to execute malicious code or evade defenses.",
+        "url": "https://attack.mitre.org/techniques/T1610/",
+    },
+    "T1525": {
+        "name": "Implant Internal Image",
+        "tactic": "Persistence",
+        "description": "Adversaries may implant container images with malicious code.",
+        "url": "https://attack.mitre.org/techniques/T1525/",
+    },
+    "T1072": {
+        "name": "Software Deployment Tools",
+        "tactic": "Execution",
+        "description": "Adversaries may abuse software deployment tools to execute malicious code.",
+        "url": "https://attack.mitre.org/techniques/T1072/",
+    },
 }
 
 

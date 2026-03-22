@@ -76,6 +76,7 @@ class Finding(BaseModel):
     snippet: str | None = None
     cwe: str | None = None
     owasp_llm: list[str] = Field(default_factory=list)
+    owasp_ast: list[str] = Field(default_factory=list)
     mitre_attack: list[str] = Field(default_factory=list)
     confidence: float = Field(ge=0.0, le=1.0)
     remediation: str | None = None
@@ -109,6 +110,7 @@ class ScanResult(BaseModel):
     findings_by_severity: dict[str, int] = Field(default_factory=dict)
     files_scanned: int
     owasp_coverage: list[str] = Field(default_factory=list)
+    owasp_ast_coverage: list[str] = Field(default_factory=list)
 
 
 class ScanRequest(BaseModel):
@@ -129,6 +131,7 @@ class DetectionRule(BaseModel):
     severity: Severity
     category: str
     owasp_llm: list[str] = Field(default_factory=list)
+    owasp_ast: list[str] = Field(default_factory=list)
     mitre_attack: list[str] = Field(default_factory=list)
     target: str  # SKILL_MD, FRONTMATTER, SCRIPT, ANY
     engine: str  # REGEX, YARA, SEMGREP, ML_CLASSIFIER

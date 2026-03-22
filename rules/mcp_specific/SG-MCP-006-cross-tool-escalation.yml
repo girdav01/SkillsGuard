@@ -10,6 +10,7 @@ description: >
 severity: critical
 category: mcp_specific
 owasp_llm: [LLM01, LLM06]
+owasp_ast: [AST03]
 mitre_attack: [T1078, T1548]
 target: ANY
 engine: REGEX

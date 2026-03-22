@@ -1,0 +1,30 @@
+id: SG-DS-003
+name: Unsafe MessagePack Deserialization
+description: >
+  Detects potentially unsafe usage of msgpack deserialization functions.
+  MessagePack unpacking without proper configuration may allow
+  deserialization of untrusted data leading to memory corruption or
+  unexpected behavior when processing crafted binary payloads.
+severity: high
+category: deserialization
+owasp_llm: [LLM06]
+owasp_ast: [AST05]
+mitre_attack: []
+target: SCRIPT
+engine: REGEX
+pattern:
+  any:
+    - "(?i)msgpack\\.unpackb?\\s*\\((?!.*raw\\s*=\\s*False)"
+    - "(?i)msgpack\\.Unpacker\\s*\\("
+false_positive_notes: >
+  MessagePack deserialization of trusted, internally-generated data
+  may be safe. The key concern is deserialization of data from
+  untrusted or external sources.
+remediation: >
+  Use msgpack.unpackb with raw=False and strict_map_key=True
+  parameters. Validate and sanitize all msgpack input before
+  deserialization. Consider using schema validation on the
+  deserialized output to ensure data conforms to expected types.
+references:
+  - https://msgpack.org/
+  - https://cwe.mitre.org/data/definitions/502.html

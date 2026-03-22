@@ -1,0 +1,33 @@
+id: SG-XP-001
+name: Platform-Specific API Usage
+description: >
+  Detects usage of platform-specific APIs such as Bash execution,
+  terminal commands, computer_use, or browser_use that may not be
+  available across all agentic platforms. Skills relying on these
+  APIs will fail silently or behave unexpectedly on unsupported
+  platforms, reducing portability and reliability.
+severity: medium
+category: cross_platform
+owasp_llm: [LLM06]
+owasp_ast: [AST10]
+mitre_attack: []
+target: SCRIPT
+engine: REGEX
+pattern:
+  any:
+    - "(?i)Bash\\s*\\("
+    - "(?i)execute_command\\s*\\("
+    - "(?i)run_terminal"
+    - "(?i)computer_use"
+    - "(?i)browser_use"
+false_positive_notes: >
+  Skills explicitly designed for a single platform may legitimately
+  use platform-specific APIs. This rule is most relevant for skills
+  intended to be portable across multiple agentic environments.
+remediation: >
+  Abstract platform-specific operations behind a compatibility layer
+  or clearly document the required platform capabilities. Provide
+  fallback implementations for alternative platforms where possible,
+  and declare platform requirements in the skill metadata.
+references:
+  - https://owasp.org/www-project-agentic-skills-top-10

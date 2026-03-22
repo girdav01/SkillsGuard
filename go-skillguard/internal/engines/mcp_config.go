@@ -70,6 +70,7 @@ func (m *MCPConfigScanner) scanConfig(sf core.SkillFile) []core.Finding {
 	findings = append(findings, checkSuspiciousURLs(sf)...)
 	findings = append(findings, checkSensitivePaths(sf)...)
 	findings = append(findings, checkWildcardPermissions(sf)...)
+	findings = append(findings, checkSupplyChain(sf)...)
 	if strings.HasSuffix(sf.Path, ".json") {
 		findings = append(findings, checkJSONConfig(sf)...)
 	}
@@ -115,6 +116,7 @@ func checkInsecureTransport(sf core.SkillFile) []core.Finding {
 			LineStart:   &lineNum,
 			Snippet:     &snippet,
 			OWASPLLM:    []string{"LLM07"},
+			OWASPAST:    []string{"AST02"},
 			Confidence:  0.90,
 			Remediation: &remediation,
 		})
@@ -139,6 +141,7 @@ func checkSuspiciousURLs(sf core.SkillFile) []core.Finding {
 			FilePath:    sf.Path,
 			LineStart:   &lineNum,
 			OWASPLLM:    []string{"LLM07"},
+			OWASPAST:    []string{"AST02"},
 			MITREAttack: []string{"T1071.001"},
 			Confidence:  0.80,
 			Remediation: &remediation,
@@ -205,11 +208,76 @@ func checkWildcardPermissions(sf core.SkillFile) []core.Finding {
 				LineStart:   &lineNum,
 				Snippet:     &snippet,
 				OWASPLLM:    []string{"LLM07"},
+				OWASPAST:    []string{"AST02"},
 				Confidence:  0.85,
 				Remediation: &remediation,
 			})
 		}
 	}
+	return findings
+}
+
+func checkSupplyChain(sf core.SkillFile) []core.Finding {
+	var findings []core.Finding
+	content := *sf.Content
+
+	// SG-MCP-SC-001: Non-official/suspicious registry references
+	suspiciousRegistry := regexp.MustCompile(`(?i)registry\s*[:=]\s*["']?https?://(\S+)`)
+	officialRegistries := []string{"registry.npmjs.org", "pypi.org"}
+	for _, match := range suspiciousRegistry.FindAllStringSubmatchIndex(content, -1) {
+		if match[2] >= 0 && match[3] >= 0 {
+			host := content[match[2]:match[3]]
+			isOfficial := false
+			for _, official := range officialRegistries {
+				if strings.HasPrefix(host, official) {
+					isOfficial = true
+					break
+				}
+			}
+			if !isOfficial {
+				lineNum := strings.Count(content[:match[0]], "\n") + 1
+				snippet := content[match[0]:match[1]]
+				if len(snippet) > 200 {
+					snippet = snippet[:200]
+				}
+				remediation := "Use official registries (registry.npmjs.org, pypi.org) for packages."
+				findings = append(findings, core.Finding{
+					RuleID:      "SG-MCP-SC-001",
+					RuleName:    "Non-Official Package Registry",
+					Severity:    core.SeverityMedium,
+					Category:    "mcp_config",
+					Description: fmt.Sprintf("Config references a non-official package registry: %s. This could indicate supply chain compromise.", truncate(snippet, 120)),
+					FilePath:    sf.Path,
+					LineStart:   &lineNum,
+					Snippet:     &snippet,
+					OWASPLLM:    []string{"LLM07"},
+					OWASPAST:    []string{"AST02"},
+					Confidence:  0.75,
+					Remediation: &remediation,
+				})
+			}
+		}
+	}
+
+	// SG-MCP-SC-002: Missing hash pinning
+	hasPackageRefs := regexp.MustCompile(`(?i)(?:npm|pip|package|dependency|require)`).MatchString(content)
+	hasHashPinning := regexp.MustCompile(`(?i)(?:@sha256:|integrity|hash)`).MatchString(content)
+	if hasPackageRefs && !hasHashPinning {
+		remediation := "Pin package dependencies with integrity hashes."
+		findings = append(findings, core.Finding{
+			RuleID:      "SG-MCP-SC-002",
+			RuleName:    "Missing Hash Pinning",
+			Severity:    core.SeverityMedium,
+			Category:    "mcp_config",
+			Description: "Config references packages but lacks hash pinning (no @sha256:, integrity, or hash found). This increases supply chain attack risk.",
+			FilePath:    sf.Path,
+			OWASPLLM:    []string{"LLM07"},
+			OWASPAST:    []string{"AST02"},
+			Confidence:  0.65,
+			Remediation: &remediation,
+		})
+	}
+
 	return findings
 }
 

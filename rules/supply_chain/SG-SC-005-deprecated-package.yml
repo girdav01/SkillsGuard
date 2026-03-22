@@ -1,0 +1,29 @@
+id: SG-SC-005
+name: Deprecated or Abandoned Package Usage
+description: >
+  Detects usage of known deprecated or abandoned Python packages.
+  Deprecated packages no longer receive security updates and may
+  contain unpatched vulnerabilities. Attackers may also take over
+  abandoned packages to distribute malicious updates.
+severity: medium
+category: supply_chain
+owasp_llm: [LLM05]
+owasp_ast: [AST02]
+mitre_attack: [T1195]
+target: SCRIPT
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(from\\s+nose\\s+import|import\\s+nose\\b|from\\s+optparse\\s+import|import\\s+imp\\b|from\\s+imp\\s+import|import\\s+urllib2\\b|import\\s+httplib\\b)"
+false_positive_notes: >
+  Legacy codebases may legitimately use deprecated packages during
+  migration periods. Verify whether the usage is part of an active
+  migration plan or if the code is unmaintained.
+remediation: >
+  Replace deprecated packages with their modern equivalents. Use
+  pytest instead of nose, argparse instead of optparse, importlib
+  instead of imp, urllib3/requests instead of urllib2, and
+  http.client instead of httplib.
+references:
+  - https://attack.mitre.org/techniques/T1195/
+  - https://docs.python.org/3/library/index.html

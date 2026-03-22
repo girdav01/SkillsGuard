@@ -9,6 +9,7 @@ description: >
 severity: critical
 category: obfuscation
 owasp_llm: [LLM01, LLM06]
+owasp_ast: [AST01]
 mitre_attack: [T1027, T1059]
 target: SCRIPT
 engine: REGEX

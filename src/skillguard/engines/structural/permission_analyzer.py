@@ -143,6 +143,7 @@ class PermissionAnalyzer(ScanEngine):
                     ),
                     file_path="(skill-wide)",
                     owasp_llm=["LLM06"],
+                    owasp_ast=["AST03"],
                     mitre_attack=["T1059", "T1071"],
                     confidence=0.75,
                     remediation="Minimize required permissions. Avoid combining shell and network access.",
@@ -163,6 +164,7 @@ class PermissionAnalyzer(ScanEngine):
                     ),
                     file_path="(skill-wide)",
                     owasp_llm=["LLM06"],
+                    owasp_ast=["AST03"],
                     confidence=0.70,
                     remediation="Restrict file deletion capabilities.",
                 )
@@ -182,6 +184,7 @@ class PermissionAnalyzer(ScanEngine):
                     ),
                     file_path="(skill-wide)",
                     owasp_llm=["LLM06"],
+                    owasp_ast=["AST03"],
                     mitre_attack=["T1552.001", "T1048"],
                     confidence=0.65,
                     remediation="Review whether environment access and network are both needed.",
@@ -205,9 +208,60 @@ class PermissionAnalyzer(ScanEngine):
                     ),
                     file_path="(skill-wide)",
                     owasp_llm=["LLM06"],
+                    owasp_ast=["AST03"],
                     confidence=0.70,
                     remediation="Reduce the number of privileged permissions requested.",
                 )
             )
+
+        # SG-PERM-005: No permission manifest declared
+        # Check if any frontmatter file has a "permissions" or "capabilities" field
+        has_manifest = False
+        for sf in skill_files:
+            if sf.content and sf.file_type in {FileType.SKILL_MD, FileType.FRONTMATTER}:
+                if re.search(r"(?i)^(?:permissions|capabilities)\s*:", sf.content, re.MULTILINE):
+                    has_manifest = True
+                    break
+
+        if not has_manifest and permissions:
+            findings.append(Finding(
+                rule_id="SG-PERM-005",
+                rule_name="No Permission Manifest",
+                severity=Severity.MEDIUM,
+                category="permissions",
+                description="Skill uses privileged operations but declares no permission manifest in frontmatter.",
+                file_path="(skill-wide)",
+                owasp_llm=["LLM06"],
+                owasp_ast=["AST03"],
+                confidence=0.70,
+                remediation="Add a permissions or capabilities section to your skill frontmatter.",
+            ))
+
+        # SG-PERM-006: Undeclared permission usage
+        # If manifest exists, check for permissions used in code but not declared
+        if has_manifest:
+            declared_perms = set()
+            for sf in skill_files:
+                if sf.content and sf.file_type in {FileType.SKILL_MD, FileType.FRONTMATTER}:
+                    for m in re.finditer(r"(?i)(?:permissions|capabilities)\s*:.*?(?=\n\S|\Z)", sf.content, re.DOTALL):
+                        manifest_text = m.group()
+                        for perm_name, _, _, _ in _PERMISSION_PATTERNS:
+                            if perm_name.replace("_", " ") in manifest_text.lower() or perm_name in manifest_text.lower():
+                                declared_perms.add(perm_name)
+
+            undeclared = set(permissions.keys()) - declared_perms
+            if undeclared:
+                findings.append(Finding(
+                    rule_id="SG-PERM-006",
+                    rule_name="Undeclared Permission Usage",
+                    severity=Severity.HIGH,
+                    category="permissions",
+                    description=f"Skill uses permissions not declared in manifest: {', '.join(sorted(undeclared))}",
+                    file_path="(skill-wide)",
+                    owasp_llm=["LLM06"],
+                    owasp_ast=["AST03"],
+                    confidence=0.65,
+                    remediation="Declare all required permissions in the skill manifest.",
+                ))
 
         return findings

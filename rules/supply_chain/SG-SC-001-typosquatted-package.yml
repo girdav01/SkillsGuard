@@ -1,0 +1,29 @@
+id: SG-SC-001
+name: Typosquatted Package Name
+description: >
+  Detects typosquatted package names that closely resemble popular Python
+  and JavaScript packages. Attackers register packages with names similar
+  to well-known libraries (e.g., "reqeusts" instead of "requests") to
+  trick developers or automated tools into installing malicious code.
+severity: high
+category: supply_chain
+owasp_llm: [LLM05]
+owasp_ast: [AST02]
+mitre_attack: [T1195.002]
+target: SCRIPT
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(reqeusts|requets|requsts|numpyy|pandsa|colorfama|djnago|flaks|beautifulsoup5|scikitlearn|tenserflow|pytorchh)"
+false_positive_notes: >
+  Some legitimate packages may have names that coincidentally resemble
+  popular package names. Verify that the flagged package name is not
+  an intentional, separate project before taking action.
+remediation: >
+  Replace the typosquatted package name with the correct, official
+  package name. Verify package authenticity on the official registry
+  (PyPI, npm) before installation. Consider using tools like pip-audit
+  or npm audit to detect supply chain risks.
+references:
+  - https://attack.mitre.org/techniques/T1195/002/
+  - https://owasp.org/www-project-top-10-for-large-language-model-applications/

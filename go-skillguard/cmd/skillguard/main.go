@@ -313,6 +313,10 @@ func buildEngines(rulesDir string) []core.EngineScanner {
 		engines.NewSchemaValidator(),
 		engines.NewPermissionAnalyzer(),
 		engines.NewObfuscationDetector(),
+		engines.NewMetadataValidator(),
+		engines.NewIsolationChecker(),
+		engines.NewCrossPlatformAnalyzer(),
+		engines.NewDependencyChecker(),
 	}
 }
 

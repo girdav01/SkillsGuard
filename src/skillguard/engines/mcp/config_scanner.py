@@ -103,6 +103,7 @@ class MCPConfigScanner(ScanEngine):
         findings.extend(self._check_suspicious_urls(sf))
         findings.extend(self._check_sensitive_paths(sf))
         findings.extend(self._check_wildcard_permissions(sf))
+        findings.extend(self._check_supply_chain(sf))
 
         if sf.path.endswith(".json"):
             findings.extend(self._check_json_config(sf))
@@ -132,6 +133,7 @@ class MCPConfigScanner(ScanEngine):
                     line_start=line_num,
                     snippet=match.group()[:200],
                     owasp_llm=["LLM07"],
+                    owasp_ast=["AST02"],
                     confidence=0.90,
                     remediation="Use HTTPS instead of HTTP for MCP server connections.",
                 )
@@ -157,6 +159,7 @@ class MCPConfigScanner(ScanEngine):
                     file_path=sf.path,
                     line_start=line_num,
                     owasp_llm=["LLM07"],
+                    owasp_ast=["AST02"],
                     mitre_attack=["T1071.001"],
                     confidence=0.80,
                     remediation="Use production-grade server URLs instead of tunneling services.",
@@ -212,10 +215,67 @@ class MCPConfigScanner(ScanEngine):
                         line_start=line_num,
                         snippet=match.group()[:200],
                         owasp_llm=["LLM07"],
+                        owasp_ast=["AST02"],
                         confidence=0.85,
                         remediation="Restrict permissions to only required tools.",
                     )
                 )
+        return findings
+
+    def _check_supply_chain(self, sf: SkillFile) -> list[Finding]:
+        """Check for supply chain risks in config files (OWASP AST02)."""
+        findings: list[Finding] = []
+        content = sf.content or ""
+
+        # SG-MCP-SC-001: Non-official/suspicious registry references
+        suspicious_registry = re.compile(
+            r'(?i)registry\s*[:=]\s*["\']?https?://(?!registry\.npmjs\.org|pypi\.org)[^\s"\']+'
+        )
+        for match in suspicious_registry.finditer(content):
+            line_num = content[:match.start()].count("\n") + 1
+            findings.append(
+                Finding(
+                    rule_id="SG-MCP-SC-001",
+                    rule_name="Non-Official Package Registry",
+                    severity=Severity.MEDIUM,
+                    category="mcp_config",
+                    description=(
+                        f"Config references a non-official package registry: "
+                        f"{match.group()[:120]}. This could indicate supply chain compromise."
+                    ),
+                    file_path=sf.path,
+                    line_start=line_num,
+                    snippet=match.group()[:200],
+                    owasp_llm=["LLM07"],
+                    owasp_ast=["AST02"],
+                    confidence=0.75,
+                    remediation="Use official registries (registry.npmjs.org, pypi.org) for packages.",
+                )
+            )
+
+        # SG-MCP-SC-002: Missing hash pinning
+        has_package_refs = bool(re.search(r'(?i)(?:npm|pip|package|dependency|require)', content))
+        has_hash_pinning = bool(re.search(r'(?i)(?:@sha256:|integrity|hash)', content))
+        if has_package_refs and not has_hash_pinning:
+            findings.append(
+                Finding(
+                    rule_id="SG-MCP-SC-002",
+                    rule_name="Missing Hash Pinning",
+                    severity=Severity.MEDIUM,
+                    category="mcp_config",
+                    description=(
+                        "Config references packages but lacks hash pinning "
+                        "(no @sha256:, integrity, or hash found). "
+                        "This increases supply chain attack risk."
+                    ),
+                    file_path=sf.path,
+                    owasp_llm=["LLM07"],
+                    owasp_ast=["AST02"],
+                    confidence=0.65,
+                    remediation="Pin package dependencies with integrity hashes.",
+                )
+            )
+
         return findings
 
     def _check_json_config(self, sf: SkillFile) -> list[Finding]:

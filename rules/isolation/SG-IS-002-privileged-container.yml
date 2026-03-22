@@ -1,0 +1,32 @@
+id: SG-IS-002
+name: Privileged Container Execution
+description: >
+  Detects container configurations that run in privileged mode.
+  Privileged containers have full access to host devices and kernel
+  capabilities, effectively disabling container isolation. This allows
+  container escape, host filesystem access, and kernel-level attacks.
+severity: critical
+category: isolation
+owasp_llm: [LLM06]
+owasp_ast: [AST06]
+mitre_attack: [T1610]
+target: CONFIG
+engine: REGEX
+pattern:
+  any:
+    - "(?i)--privileged\\b"
+    - "(?i)privileged:\\s*true"
+    - "(?i)securityContext:.*privileged:\\s*true"
+false_positive_notes: >
+  Certain system-level containers (e.g., device plugins, storage drivers)
+  may legitimately require privileged mode. Verify that the use case
+  genuinely requires full privileges and cannot use specific capabilities
+  instead.
+remediation: >
+  Remove the privileged flag and use specific Linux capabilities instead
+  (e.g., --cap-add SYS_PTRACE). Apply the principle of least privilege
+  by granting only the exact capabilities required. Use seccomp profiles
+  and AppArmor to further restrict container behavior.
+references:
+  - https://attack.mitre.org/techniques/T1610/
+  - https://docs.docker.com/engine/reference/run/#runtime-privilege-and-linux-capabilities

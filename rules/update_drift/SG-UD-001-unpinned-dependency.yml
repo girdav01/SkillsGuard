@@ -1,0 +1,32 @@
+id: SG-UD-001
+name: Unpinned Dependency Version
+description: >
+  Detects dependencies without pinned versions that may drift over time.
+  Unpinned or loosely pinned dependencies can silently update to versions
+  containing vulnerabilities, breaking changes, or malicious code without
+  the developer's knowledge, leading to supply chain compromise.
+severity: medium
+category: update_drift
+owasp_llm: [LLM05]
+owasp_ast: [AST07]
+mitre_attack: [T1195]
+target: CONFIG
+engine: REGEX
+pattern:
+  any:
+    - "(?m)^[a-zA-Z][\\w.-]*\\s*>="
+    - "(?i)\"version\"\\s*:\\s*\"[\\^~*]"
+    - "(?i)\"version\"\\s*:\\s*\"latest\""
+    - "(?m)^[a-zA-Z][\\w.-]*\\s*$"
+false_positive_notes: >
+  Development or testing configurations may intentionally use unpinned
+  dependencies for flexibility. This rule is most relevant for production
+  dependency files. Verify the context before treating as a true positive.
+remediation: >
+  Pin all dependencies to exact versions (e.g., requests==2.31.0 or
+  "version": "2.31.0"). Use lock files (package-lock.json, Pipfile.lock,
+  poetry.lock) to ensure reproducible builds. Regularly audit and update
+  pinned versions using automated tools like Dependabot or Renovate.
+references:
+  - https://attack.mitre.org/techniques/T1195/
+  - https://owasp.org/www-project-top-10-for-large-language-model-applications/

@@ -1,0 +1,30 @@
+id: SG-SC-004
+name: Missing Integrity Hash
+description: >
+  Detects dependency files that lack integrity hashes for installed
+  packages. Without integrity verification (sha256, sha512), packages
+  may be tampered with during transit or on the registry without
+  detection, allowing supply chain compromise.
+severity: medium
+category: supply_chain
+owasp_llm: [LLM05]
+owasp_ast: [AST02]
+mitre_attack: []
+target: CONFIG
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(?:require|dependency|install)(?!.*(?:sha256|sha512|integrity|hash))"
+false_positive_notes: >
+  This is a simplified heuristic and may produce false positives in
+  files that use alternative integrity mechanisms or where hashes
+  are stored in separate lock files. Verify whether a corresponding
+  lock file with integrity data exists.
+remediation: >
+  Generate and verify integrity hashes for all dependencies. Use
+  pip install --require-hashes, npm ci with package-lock.json
+  integrity fields, or equivalent mechanisms. Ensure lock files
+  with integrity data are committed to version control.
+references:
+  - https://pip.pypa.io/en/stable/topics/secure-installs/
+  - https://docs.npmjs.com/cli/v9/configuring-npm/package-lock-json

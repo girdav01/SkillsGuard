@@ -1,0 +1,35 @@
+id: SG-XP-005
+name: Sandbox Escalation
+description: >
+  Detects configurations that disable or bypass sandbox protections,
+  such as host_mode, sandbox disabling, or unrestricted mode flags.
+  These settings weaken the security boundary between the skill and the
+  host system, potentially allowing unauthorized access to system
+  resources and sensitive data.
+severity: high
+category: cross_platform
+owasp_llm: [LLM06]
+owasp_ast: [AST10]
+mitre_attack: [T1190]
+target: CONFIG
+engine: REGEX
+pattern:
+  any:
+    - "(?i)host_mode:\\s*true"
+    - "(?i)sandbox:\\s*false"
+    - "(?i)disable_sandbox"
+    - "(?i)no[_-]?sandbox"
+    - "(?i)unrestricted_mode"
+false_positive_notes: >
+  Certain debugging or development workflows may require disabling
+  sandbox protections temporarily. Ensure these settings are never
+  present in production skill configurations.
+remediation: >
+  Remove sandbox-disabling configurations and operate within the
+  platform's default security boundary. If elevated privileges are
+  required, document the specific permissions needed and request them
+  through the platform's official permission model rather than
+  bypassing the sandbox entirely.
+references:
+  - https://attack.mitre.org/techniques/T1190/
+  - https://owasp.org/www-project-agentic-skills-top-10

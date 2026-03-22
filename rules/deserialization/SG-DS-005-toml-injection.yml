@@ -1,0 +1,32 @@
+id: SG-DS-005
+name: TOML/Config Injection
+description: >
+  Detects potentially unsafe TOML and configuration file parsing. Loading
+  configuration files without proper validation can allow attackers to
+  inject malicious values or override critical settings, especially when
+  parsing untrusted input sources.
+severity: medium
+category: deserialization
+owasp_llm: [LLM06]
+owasp_ast: [AST05]
+mitre_attack: []
+target: CONFIG
+engine: REGEX
+pattern:
+  any:
+    - "(?i)toml\\.loads?\\s*\\((?!.*(?:parse|safe))"
+    - "(?i)configparser\\.(?:read|readfp)\\s*\\("
+false_positive_notes: >
+  Standard configuration file loading for application setup is common
+  and generally safe when the config files are trusted. This rule may
+  flag legitimate configuration parsing; verify that the input source
+  is untrusted before treating as a true positive.
+remediation: >
+  Validate all configuration input before parsing. Use schema validation
+  to ensure configuration values conform to expected types and ranges.
+  Avoid loading configuration files from untrusted or user-controlled
+  sources. Consider using a safe parsing mode or dedicated configuration
+  management library with built-in validation.
+references:
+  - https://toml.io/en/
+  - https://cwe.mitre.org/data/definitions/502.html

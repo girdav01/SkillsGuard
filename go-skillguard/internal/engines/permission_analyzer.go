@@ -75,6 +75,7 @@ func (p *PermissionAnalyzer) Scan(skillFiles []core.SkillFile, rules []core.Dete
 					LineStart:   &lineStart,
 					Snippet:     &snippet,
 					OWASPLLM:    []string{"LLM06"},
+					OWASPAST:    []string{"AST03"},
 					Confidence:  0.70,
 				})
 			}

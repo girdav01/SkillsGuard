@@ -1,0 +1,30 @@
+id: SG-IS-005
+name: Dangerous Volume Mount
+description: >
+  Detects container configurations that mount sensitive host paths such
+  as the root filesystem, /etc, Docker socket, /proc, /sys, or /dev.
+  These mounts can allow container escape, host configuration tampering,
+  or full control over the Docker daemon.
+severity: critical
+category: isolation
+owasp_llm: [LLM06]
+owasp_ast: [AST06]
+mitre_attack: [T1610]
+target: CONFIG
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(?:volumes:|--volume|-v)\\s+[^\\n]*(?:/:|/etc[:/]|docker\\.sock|/proc[:/]|/sys[:/]|/dev[:/])"
+false_positive_notes: >
+  Some legitimate tools require access to Docker socket (e.g., CI/CD
+  runners) or /proc (e.g., monitoring agents). Verify that the volume
+  mount is genuinely required and that the container runs with minimal
+  privileges.
+remediation: >
+  Remove dangerous volume mounts and use named volumes or bind mounts
+  to specific, non-sensitive directories. If Docker socket access is
+  required, use a Docker socket proxy with restricted API access. Mount
+  sensitive paths as read-only when absolutely necessary.
+references:
+  - https://attack.mitre.org/techniques/T1610/
+  - https://docs.docker.com/storage/volumes/

@@ -1,0 +1,32 @@
+id: SG-DS-001
+name: Unsafe XML Parsing
+description: >
+  Detects usage of XML parsing libraries that are vulnerable to XML
+  External Entity (XXE) attacks. Unsafe XML parsers can be exploited
+  to read local files, perform server-side request forgery, or cause
+  denial of service through entity expansion attacks.
+severity: high
+category: deserialization
+owasp_llm: [LLM06]
+owasp_ast: [AST05]
+mitre_attack: [T1059.006]
+target: SCRIPT
+engine: REGEX
+pattern:
+  any:
+    - "(?i)xml\\.etree\\.ElementTree\\.parse"
+    - "(?i)xml\\.dom\\.minidom\\.parse"
+    - "(?i)lxml\\.etree\\.parse\\s*\\((?!.*resolve_entities\\s*=\\s*False)"
+    - "(?i)xml\\.sax\\.parse"
+false_positive_notes: >
+  XML parsing of trusted, locally-generated XML files may be safe.
+  However, any XML parsing of external or user-supplied input should
+  use defusedxml or equivalent hardened parsers.
+remediation: >
+  Replace unsafe XML parsers with defusedxml equivalents
+  (defusedxml.ElementTree, defusedxml.minidom). For lxml, set
+  resolve_entities=False and no_network=True. Disable external
+  entity processing and DTD loading in all XML parsers.
+references:
+  - https://attack.mitre.org/techniques/T1059/006/
+  - https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html

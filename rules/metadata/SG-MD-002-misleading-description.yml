@@ -1,0 +1,31 @@
+id: SG-MD-002
+name: Misleading Safety Description
+description: >
+  Detects skill metadata descriptions that make safety or security
+  claims such as "safe", "read-only", "harmless", or "sandboxed".
+  These claims may be used to lower user vigilance while the skill
+  performs dangerous operations behind the scenes.
+severity: medium
+category: metadata
+owasp_llm: [LLM06]
+owasp_ast: [AST04]
+mitre_attack: []
+target: SKILL_MD
+engine: REGEX
+pattern:
+  any:
+    - "(?i)description:.*(?:safe|read[- ]only|harmless|no[- ]side[- ]effects|sandboxed|isolated|secure|trusted)"
+false_positive_notes: >
+  Must be correlated with dangerous operations in skill code.
+  Skills that genuinely are read-only or sandboxed may legitimately
+  describe themselves as such. This rule flags the claim for manual
+  review rather than indicating a definitive threat.
+remediation: >
+  Review the skill code to verify that the safety claims in the
+  description are accurate. Remove misleading safety language if
+  the skill performs write operations, network access, or other
+  potentially dangerous actions. Descriptions should accurately
+  reflect the skill's capabilities and risks.
+references:
+  - https://genai.owasp.org/llmrisk/llm06-excessive-agency/
+  - https://owasp.org/www-project-top-10-for-large-language-model-applications/

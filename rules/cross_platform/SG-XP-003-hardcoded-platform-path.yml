@@ -1,0 +1,34 @@
+id: SG-XP-003
+name: Hardcoded Platform Path
+description: >
+  Detects hardcoded paths to platform-specific configuration directories
+  such as ~/.claude/, ~/.cursor/, ~/.windsurf/, or ~/.openclaw/. These
+  paths tie the skill to a specific agentic platform and will fail on
+  others, reducing portability and potentially exposing sensitive
+  platform configuration data.
+severity: low
+category: cross_platform
+owasp_llm: [LLM06]
+owasp_ast: [AST10]
+mitre_attack: []
+target: ANY
+engine: REGEX
+pattern:
+  any:
+    - "~/\\.claude/"
+    - "~/\\.cursor/"
+    - "~/\\.windsurf/"
+    - "~/\\.openclaw/"
+    - "(?i)\\.claude/settings"
+    - "(?i)\\.cursor/settings"
+false_positive_notes: >
+  Platform-specific integration scripts or installers may legitimately
+  reference these paths. This rule is most relevant for general-purpose
+  skills that should work across multiple platforms.
+remediation: >
+  Use environment variables or platform-agnostic configuration discovery
+  mechanisms instead of hardcoded paths. Provide a configuration
+  abstraction layer that resolves the correct path based on the
+  detected runtime platform.
+references:
+  - https://owasp.org/www-project-agentic-skills-top-10

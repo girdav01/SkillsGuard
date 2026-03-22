@@ -1,0 +1,31 @@
+id: SG-SC-003
+name: Non-Official Package Registry
+description: >
+  Detects references to non-official or third-party package registries.
+  Attackers may configure custom registries to serve malicious packages
+  that impersonate legitimate ones, enabling dependency confusion or
+  substitution attacks.
+severity: high
+category: supply_chain
+owasp_llm: [LLM05]
+owasp_ast: [AST02]
+mitre_attack: [T1195.002]
+target: CONFIG
+engine: REGEX
+pattern:
+  any:
+    - "(?i)--index-url\\s+https?://(?!pypi\\.org)"
+    - "(?i)\"registry\"\\s*:\\s*\"https?://(?!registry\\.npmjs\\.org)"
+    - "(?i)--extra-index-url"
+false_positive_notes: >
+  Organizations with private package registries will trigger this rule.
+  Verify that the custom registry is an authorized, internal artifact
+  repository before dismissing the finding.
+remediation: >
+  Use only official package registries (pypi.org, registry.npmjs.org)
+  or explicitly authorized private registries. Remove any --extra-index-url
+  directives unless strictly required for internal packages. Configure
+  registry authentication and verify registry TLS certificates.
+references:
+  - https://attack.mitre.org/techniques/T1195/002/
+  - https://medium.com/@alex.birsan/dependency-confusion-4a5d60fec610

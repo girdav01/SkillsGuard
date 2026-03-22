@@ -112,6 +112,24 @@ func CollectOWASPCoverage(engineResults []EngineResult) []string {
 	return result
 }
 
+// CollectOWASPASTCoverage collects unique OWASP AST10 references from findings.
+func CollectOWASPASTCoverage(engineResults []EngineResult) []string {
+	refs := make(map[string]bool)
+	for _, er := range engineResults {
+		for _, f := range er.Findings {
+			for _, ref := range f.OWASPAST {
+				refs[ref] = true
+			}
+		}
+	}
+	result := make([]string, 0, len(refs))
+	for ref := range refs {
+		result = append(result, ref)
+	}
+	sortStrings(result)
+	return result
+}
+
 func sortStrings(s []string) {
 	for i := 0; i < len(s); i++ {
 		for j := i + 1; j < len(s); j++ {

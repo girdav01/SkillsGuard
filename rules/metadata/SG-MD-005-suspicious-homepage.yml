@@ -1,0 +1,32 @@
+id: SG-MD-005
+name: Suspicious Homepage URL
+description: >
+  Detects skill metadata with homepage or URL fields pointing to
+  suspicious destinations such as tunnel services (ngrok, localtunnel),
+  localhost addresses, or raw IP addresses. These may indicate
+  development artifacts or intentional redirection to attacker
+  infrastructure.
+severity: medium
+category: metadata
+owasp_llm: [LLM06]
+owasp_ast: [AST04]
+mitre_attack: [T1036]
+target: SKILL_MD
+engine: REGEX
+pattern:
+  any:
+    - "(?i)(?:homepage|url):\\s*[\"']?https?://.*(?:ngrok|localtunnel|serveo)"
+    - "(?i)(?:homepage|url):\\s*[\"']?https?://(?:localhost|127\\.0\\.0\\.1|0\\.0\\.0\\.0)"
+    - "(?i)(?:homepage|url):\\s*[\"']?https?://\\d+\\.\\d+\\.\\d+\\.\\d+"
+false_positive_notes: >
+  Development and testing configurations may legitimately use
+  localhost or tunnel services. Verify whether this is a production
+  configuration before escalating.
+remediation: >
+  Replace suspicious homepage URLs with the official project URL
+  hosted on a recognized domain. Remove references to tunnel
+  services, localhost, and raw IP addresses from production
+  skill metadata.
+references:
+  - https://attack.mitre.org/techniques/T1036/
+  - https://genai.owasp.org/llmrisk/llm06-excessive-agency/

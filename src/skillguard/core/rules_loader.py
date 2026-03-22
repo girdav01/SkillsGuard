@@ -68,6 +68,7 @@ def _load_rule_file(path: Path) -> DetectionRule | None:
         severity=data.get("severity", "medium"),
         category=data.get("category", "unknown"),
         owasp_llm=data.get("owasp_llm", []),
+        owasp_ast=data.get("owasp_ast", []),
         mitre_attack=data.get("mitre_attack", []),
         target=data.get("target", "ANY"),
         engine=data.get("engine", "REGEX"),

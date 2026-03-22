@@ -1,0 +1,33 @@
+id: SG-IS-001
+name: Docker Host Network Mode
+description: >
+  Detects container configurations using host network mode. Running
+  containers with host networking removes network isolation, allowing
+  the container to access all host network interfaces and services.
+  This can enable lateral movement, service discovery, and direct
+  access to host-bound services.
+severity: critical
+category: isolation
+owasp_llm: [LLM06]
+owasp_ast: [AST06]
+mitre_attack: [T1610]
+target: CONFIG
+engine: REGEX
+pattern:
+  any:
+    - "(?i)--network[=\\s]+host"
+    - "(?i)network_mode:\\s*[\"']?host"
+    - "(?i)hostNetwork:\\s*true"
+false_positive_notes: >
+  Some legitimate use cases require host networking, such as network
+  monitoring tools or performance-sensitive applications. Verify that
+  host network mode is genuinely required and that compensating controls
+  are in place.
+remediation: >
+  Use bridge or custom Docker networks instead of host network mode.
+  Define explicit port mappings to expose only required services.
+  If host networking is absolutely necessary, apply additional security
+  controls such as firewall rules and network policies to limit exposure.
+references:
+  - https://attack.mitre.org/techniques/T1610/
+  - https://docs.docker.com/network/host/
