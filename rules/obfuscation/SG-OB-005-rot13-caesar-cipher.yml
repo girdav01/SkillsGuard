@@ -8,6 +8,7 @@ description: >
 severity: low
 category: obfuscation
 owasp_llm: [LLM01]
+owasp_ast: [AST01]
 mitre_attack: [T1027]
 target: ANY
 engine: REGEX

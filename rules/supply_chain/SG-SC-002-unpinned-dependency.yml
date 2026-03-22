@@ -1,0 +1,32 @@
+id: SG-SC-002
+name: Unpinned Dependency Version
+description: >
+  Detects dependencies that are not pinned to a specific version. Unpinned
+  dependencies allow automatic updates to newer versions, which may
+  introduce breaking changes, vulnerabilities, or malicious code injected
+  through a compromised package update.
+severity: medium
+category: supply_chain
+owasp_llm: [LLM05]
+owasp_ast: [AST02]
+mitre_attack: []
+target: CONFIG
+engine: REGEX
+pattern:
+  any:
+    - "(?m)^[a-zA-Z][\\w.-]*\\s*>="
+    - "\"version\"\\s*:\\s*\"[\\^~*]"
+    - "\"version\"\\s*:\\s*\"latest\""
+    - "(?m)^[a-zA-Z][\\w.-]*\\s*$"
+false_positive_notes: >
+  Some development or testing configurations intentionally use unpinned
+  dependencies to always test against the latest versions. This is
+  acceptable in CI environments but not in production deployments.
+remediation: >
+  Pin all dependencies to exact versions using == (Python) or exact
+  version strings (Node.js). Use lock files (requirements.txt with
+  hashes, package-lock.json, Pipfile.lock) to ensure reproducible
+  builds. Regularly audit and update pinned versions.
+references:
+  - https://owasp.org/www-project-top-10-for-large-language-model-applications/
+  - https://cwe.mitre.org/data/definitions/1357.html

@@ -102,6 +102,20 @@ class PolicyEngine:
                 action="warn",
                 conditions={"owasp_detected": "LLM01"},
             ),
+            PolicyRule(
+                id="POL-007",
+                name="Require Skill Inventory Registration",
+                description="Warn if skill is not registered in the inventory",
+                action="warn",
+                conditions={"inventory_registered": False},
+            ),
+            PolicyRule(
+                id="POL-008",
+                name="Require Approval for High-Privilege Skills",
+                description="Block high-privilege skills that have not been approved",
+                action="block",
+                conditions={"approval_required": True, "approved_by": ""},
+            ),
         ]
 
     def load_policies_from_yaml(self, yaml_content: str) -> int:
@@ -196,6 +210,19 @@ class PolicyEngine:
             owasp_id = conditions["owasp_detected"]
             if owasp_id in result.owasp_coverage:
                 return f"OWASP {owasp_id} detected"
+
+        # Check inventory registration
+        if "inventory_registered" in conditions:
+            if not conditions["inventory_registered"]:
+                registered = getattr(result, "inventory_registered", False)
+                if not registered:
+                    return "Skill is not registered in the inventory"
+
+        # Check approval for high-privilege skills
+        if "approval_required" in conditions and conditions["approval_required"]:
+            approved_by = getattr(result, "approved_by", None)
+            if not approved_by:
+                return "High-privilege skill requires approval but has not been approved"
 
         return ""
 

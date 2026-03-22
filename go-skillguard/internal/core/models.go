@@ -93,6 +93,7 @@ type Finding struct {
 	Snippet     *string  `json:"snippet,omitempty"`
 	CWE         *string  `json:"cwe,omitempty"`
 	OWASPLLM    []string `json:"owasp_llm,omitempty"`
+	OWASPAST    []string `json:"owasp_ast,omitempty"`
 	MITREAttack []string `json:"mitre_attack,omitempty"`
 	Confidence  float64  `json:"confidence"`
 	Remediation *string  `json:"remediation,omitempty"`
@@ -124,6 +125,7 @@ type ScanResult struct {
 	FindingsBySeverity map[string]int `json:"findings_by_severity"`
 	FilesScanned       int            `json:"files_scanned"`
 	OWASPCoverage      []string       `json:"owasp_coverage,omitempty"`
+	OWASPASTCoverage   []string       `json:"owasp_ast_coverage,omitempty"`
 }
 
 // ScanRequest represents a request to scan a skill.
@@ -142,6 +144,7 @@ type DetectionRule struct {
 	Severity           Severity `json:"severity" yaml:"severity"`
 	Category           string   `json:"category" yaml:"category"`
 	OWASPLLM           []string `json:"owasp_llm" yaml:"owasp_llm"`
+	OWASPAST           []string `json:"owasp_ast" yaml:"owasp_ast"`
 	MITREAttack        []string `json:"mitre_attack" yaml:"mitre_attack"`
 	Target             string   `json:"target" yaml:"target"`
 	Engine             string   `json:"engine" yaml:"engine"`

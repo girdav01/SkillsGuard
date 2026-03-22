@@ -1,0 +1,32 @@
+id: SG-DS-002
+name: JSON Deserialization with Code Execution
+description: >
+  Detects JSON deserialization patterns that can lead to arbitrary code
+  execution. Custom object hooks in json.loads, jsonpickle, and
+  json_tricks can instantiate arbitrary Python objects, enabling
+  remote code execution through crafted JSON payloads.
+severity: high
+category: deserialization
+owasp_llm: [LLM06]
+owasp_ast: [AST05]
+mitre_attack: [T1059.006]
+target: SCRIPT
+engine: REGEX
+pattern:
+  any:
+    - "(?i)json\\.loads?\\s*\\(.*object_hook"
+    - "(?i)jsonpickle\\.(?:decode|loads)"
+    - "(?i)json_tricks\\.loads?"
+false_positive_notes: >
+  Custom object_hook functions that only construct safe, known data
+  types may be acceptable. Review the hook implementation to determine
+  whether arbitrary class instantiation is possible.
+remediation: >
+  Avoid using object_hook with untrusted JSON input. Replace
+  jsonpickle and json_tricks with standard json module for
+  deserialization. If custom deserialization is needed, use
+  explicit schema validation with libraries like pydantic or
+  marshmallow instead of generic object hooks.
+references:
+  - https://attack.mitre.org/techniques/T1059/006/
+  - https://blog.nelhage.com/2011/03/exploiting-pickle/

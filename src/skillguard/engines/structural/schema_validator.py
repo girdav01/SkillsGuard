@@ -53,6 +53,8 @@ class SchemaValidator(ScanEngine):
         # Validate individual files
         for sf in skill_files:
             findings.extend(self._validate_file(sf))
+            if sf.file_type in {FileType.SCRIPT_PYTHON, FileType.SCRIPT_BASH, FileType.SCRIPT_JS}:
+                findings.extend(self._check_deserialization_safety(sf))
 
         elapsed_ms = int((time.monotonic() - start) * 1000)
 
@@ -137,6 +139,63 @@ class SchemaValidator(ScanEngine):
                     description=f"Hidden file '{sf.path}' detected in skill package.",
                     file_path=sf.path,
                     confidence=0.60,
+                )
+            )
+
+        return findings
+
+    def _check_deserialization_safety(self, sf: SkillFile) -> list[Finding]:
+        """Check for unsafe deserialization patterns (OWASP AST05)."""
+        findings: list[Finding] = []
+        content = sf.content or ""
+
+        # SG-STRUCT-DS-001: Unsafe XML parsing
+        xml_pattern = re.compile(
+            r"(?i)(xml\.etree\.ElementTree|xml\.dom\.minidom|xml\.sax|lxml\.etree)(?!.*defusedxml)"
+        )
+        for match in xml_pattern.finditer(content):
+            line_num = content[:match.start()].count("\n") + 1
+            findings.append(
+                Finding(
+                    rule_id="SG-STRUCT-DS-001",
+                    rule_name="Unsafe XML Parsing",
+                    severity=Severity.HIGH,
+                    category="structural",
+                    description=(
+                        f"Unsafe XML parser '{match.group(1)}' used without defusedxml. "
+                        f"Vulnerable to XML external entity (XXE) attacks."
+                    ),
+                    file_path=sf.path,
+                    line_start=line_num,
+                    snippet=match.group()[:200],
+                    owasp_ast=["AST05"],
+                    confidence=0.85,
+                    remediation="Use defusedxml instead of standard XML parsers to prevent XXE attacks.",
+                )
+            )
+
+        # SG-STRUCT-DS-002: JSON with code execution hooks
+        json_hook_pattern = re.compile(
+            r"(?i)json\.loads?\s*\(.*object_hook|jsonpickle\.decode"
+        )
+        for match in json_hook_pattern.finditer(content):
+            line_num = content[:match.start()].count("\n") + 1
+            findings.append(
+                Finding(
+                    rule_id="SG-STRUCT-DS-002",
+                    rule_name="JSON Code Execution Hook",
+                    severity=Severity.HIGH,
+                    category="structural",
+                    description=(
+                        "JSON deserialization with code execution hooks detected. "
+                        "This can lead to arbitrary code execution via crafted payloads."
+                    ),
+                    file_path=sf.path,
+                    line_start=line_num,
+                    snippet=match.group()[:200],
+                    owasp_ast=["AST05"],
+                    confidence=0.80,
+                    remediation="Avoid using object_hook with untrusted data. Do not use jsonpickle for untrusted input.",
                 )
             )
 

@@ -49,6 +49,8 @@ def generate_sarif_report(result: ScanResult) -> str:
                 }
                 if finding.owasp_llm:
                     rule_entry["properties"]["owasp_llm"] = finding.owasp_llm
+                if finding.owasp_ast:
+                    rule_entry["properties"]["owasp_ast"] = finding.owasp_ast
                 if finding.mitre_attack:
                     rule_entry["properties"]["mitre_attack"] = finding.mitre_attack
                 if finding.cwe:

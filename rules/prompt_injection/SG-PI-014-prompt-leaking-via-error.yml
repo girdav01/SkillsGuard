@@ -7,6 +7,7 @@ description: >
 severity: medium
 category: prompt_injection
 owasp_llm: [LLM01, LLM07]
+owasp_ast: [AST01]
 mitre_attack: [T1082, T1059]
 target: SKILL_MD
 engine: REGEX

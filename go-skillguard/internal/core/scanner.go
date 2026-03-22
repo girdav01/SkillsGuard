@@ -112,6 +112,7 @@ func (o *ScanOrchestrator) Scan(request ScanRequest) (*ScanResult, error) {
 		FindingsBySeverity: AggregateFindingsBySeverity(engineResults),
 		FilesScanned:       len(skillFiles),
 		OWASPCoverage:      CollectOWASPCoverage(engineResults),
+		OWASPASTCoverage:   CollectOWASPASTCoverage(engineResults),
 	}, nil
 }
 

@@ -22,6 +22,10 @@ from skillguard.engines.sandbox.behavior_analyzer import BehaviorAnalyzer
 from skillguard.engines.structural.schema_validator import SchemaValidator
 from skillguard.engines.structural.permission_analyzer import PermissionAnalyzer
 from skillguard.engines.structural.obfuscation_detector import ObfuscationDetector
+from skillguard.engines.structural.metadata_validator import MetadataValidator
+from skillguard.engines.sandbox.isolation_checker import IsolationChecker
+from skillguard.engines.structural.cross_platform_analyzer import CrossPlatformAnalyzer
+from skillguard.engines.structural.dependency_checker import DependencyChecker
 from skillguard.intelligence.threat_db import ThreatIntelDB
 
 router = APIRouter()
@@ -74,6 +78,10 @@ def _get_orchestrator() -> ScanOrchestrator:
         SchemaValidator(),
         PermissionAnalyzer(),
         ObfuscationDetector(),
+        MetadataValidator(),
+        IsolationChecker(),
+        CrossPlatformAnalyzer(),
+        DependencyChecker(),
     ]
     threat_intel = ThreatIntelDB()
     return ScanOrchestrator(engines=engines, threat_intel=threat_intel)

@@ -11,6 +11,7 @@ description: >
 severity: high
 category: mcp_specific
 owasp_llm: [LLM07]
+owasp_ast: [AST02]
 mitre_attack: [T1195.002]
 target: ANY
 engine: REGEX

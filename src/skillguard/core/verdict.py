@@ -113,3 +113,12 @@ def collect_owasp_coverage(engine_results: list[EngineResult]) -> list[str]:
         for finding in result.findings:
             refs.update(finding.owasp_llm)
     return sorted(refs)
+
+
+def collect_owasp_ast_coverage(engine_results: list[EngineResult]) -> list[str]:
+    """Collect all unique OWASP AST10 references from findings."""
+    refs: set[str] = set()
+    for result in engine_results:
+        for finding in result.findings:
+            refs.update(finding.owasp_ast)
+    return sorted(refs)

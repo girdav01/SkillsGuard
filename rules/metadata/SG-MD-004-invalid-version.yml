@@ -1,0 +1,28 @@
+id: SG-MD-004
+name: Invalid Version Format
+description: >
+  Detects version fields in skill metadata that do not follow semantic
+  versioning (semver) format. Non-standard version formats may indicate
+  poorly maintained skills or attempts to circumvent version-based
+  security checks.
+severity: low
+category: metadata
+owasp_llm: [LLM06]
+owasp_ast: [AST04]
+mitre_attack: []
+target: SKILL_MD
+engine: REGEX
+pattern:
+  any:
+    - "(?i)version:\\s*[\"']?(?!\\d+\\.\\d+\\.\\d+)[^\\n]+"
+false_positive_notes: >
+  Some projects use alternative versioning schemes such as CalVer
+  (calendar versioning) or custom formats. Verify the project's
+  versioning policy before treating this as a security concern.
+remediation: >
+  Update the version field to use semantic versioning format
+  (MAJOR.MINOR.PATCH, e.g., 1.0.0). Follow the semver specification
+  at semver.org for consistent and meaningful version numbering.
+references:
+  - https://semver.org/
+  - https://genai.owasp.org/llmrisk/llm06-excessive-agency/

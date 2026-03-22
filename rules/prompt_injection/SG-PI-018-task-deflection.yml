@@ -8,6 +8,7 @@ description: >
 severity: high
 category: prompt_injection
 owasp_llm: [LLM01]
+owasp_ast: [AST01]
 mitre_attack: [T1059.006]
 target: SKILL_MD
 engine: REGEX

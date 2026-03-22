@@ -22,6 +22,7 @@ from skillguard.core.skill_parser import parse_skill_directory
 from skillguard.core.verdict import (
     aggregate_findings_by_severity,
     calculate_risk_score,
+    collect_owasp_ast_coverage,
     collect_owasp_coverage,
 )
 from skillguard.engines.base import ScanEngine
@@ -98,6 +99,7 @@ class ScanOrchestrator:
         total_findings = sum(len(r.findings) for r in engine_results)
         findings_by_severity = aggregate_findings_by_severity(engine_results)
         owasp_coverage = collect_owasp_coverage(engine_results)
+        owasp_ast_coverage = collect_owasp_ast_coverage(engine_results)
 
         return ScanResult(
             scan_id=scan_id,
@@ -113,6 +115,7 @@ class ScanOrchestrator:
             findings_by_severity=findings_by_severity,
             files_scanned=len(skill_files),
             owasp_coverage=owasp_coverage,
+            owasp_ast_coverage=owasp_ast_coverage,
         )
 
     async def _run_engines(self, skill_files: list[SkillFile]) -> list[EngineResult]:
