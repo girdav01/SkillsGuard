@@ -140,6 +140,7 @@ func (v *VectorSearchEngine) searchFallback(sf core.SkillFile) []core.Finding {
 				LineStart:   lineStart,
 				Snippet:     snippet,
 				OWASPLLM:    []string{"LLM01"},
+				OWASPAST:    []string{"AST01", "AST05"},
 				Confidence:  conf3,
 				Remediation: &remediation,
 			})

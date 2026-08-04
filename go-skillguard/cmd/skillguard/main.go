@@ -395,6 +395,13 @@ func printRichResult(result *core.ScanResult) {
 			}
 		}
 	}
+
+	if len(result.OWASPCoverage) > 0 {
+		fmt.Printf("\nOWASP LLM Top 10 Coverage: %s\n", strings.Join(result.OWASPCoverage, ", "))
+	}
+	if len(result.OWASPASTCoverage) > 0 {
+		fmt.Printf("OWASP Agentic Skills Top 10 Coverage: %s\n", strings.Join(result.OWASPASTCoverage, ", "))
+	}
 }
 
 // Ensure json is used

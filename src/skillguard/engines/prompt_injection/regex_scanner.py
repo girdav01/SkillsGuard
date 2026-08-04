@@ -150,6 +150,7 @@ def _apply_rule(rule: DetectionRule, sf: SkillFile) -> list[Finding]:
                     line_end=line_end,
                     snippet=snippet,
                     owasp_llm=rule.owasp_llm,
+                    owasp_ast=rule.owasp_ast,
                     mitre_attack=rule.mitre_attack,
                     confidence=0.8,
                     remediation=rule.remediation,

@@ -25,6 +25,7 @@ def _make_result(
     score: int = 10,
     findings_by_severity: dict | None = None,
     owasp: list[str] | None = None,
+    owasp_ast: list[str] | None = None,
 ) -> ScanResult:
     return ScanResult(
         scan_id="test-001",
@@ -40,6 +41,7 @@ def _make_result(
         findings_by_severity=findings_by_severity or {},
         files_scanned=1,
         owasp_coverage=owasp or [],
+        owasp_ast_coverage=owasp_ast or [],
     )
 
 
@@ -152,10 +154,46 @@ policies:
 
     def test_list_policies(self, engine: PolicyEngine):
         policies = engine.list_policies()
-        assert len(policies) == 6  # 6 default policies
+        assert len(policies) == 8  # 8 default policies
         ids = {p.id for p in policies}
         assert "POL-001" in ids
         assert "POL-006" in ids
+        assert "POL-007" in ids
+        assert "POL-008" in ids
+
+    @pytest.mark.asyncio
+    async def test_owasp_ast_detected_condition(self, engine: PolicyEngine):
+        custom = PolicyRule(
+            id="CUSTOM-AST05",
+            name="Block Prompt Injection Skills",
+            action="block",
+            conditions={"owasp_ast_detected": "AST05"},
+        )
+        engine.add_policy(custom)
+        result = _make_result(verdict="low_risk", score=25, owasp_ast=["AST01", "AST05"])
+        policy_result = await engine.evaluate(result)
+        assert policy_result.allowed is False
+        assert any(v.policy_id == "CUSTOM-AST05" for v in policy_result.violations)
+
+    @pytest.mark.asyncio
+    async def test_owasp_detected_matches_ast_ids(self, engine: PolicyEngine):
+        custom = PolicyRule(
+            id="CUSTOM-AST01",
+            name="Warn on Malicious Skill Indicators",
+            action="warn",
+            conditions={"owasp_detected": "AST01"},
+        )
+        engine.add_policy(custom)
+        result = _make_result(verdict="low_risk", score=25, owasp_ast=["AST01"])
+        policy_result = await engine.evaluate(result)
+        assert any(w.policy_id == "CUSTOM-AST01" for w in policy_result.warnings)
+
+    @pytest.mark.asyncio
+    async def test_unapproved_high_privilege_skill_blocked(self, engine: PolicyEngine):
+        result = _make_result(verdict="suspicious", score=45, owasp_ast=["AST03"])
+        policy_result = await engine.evaluate(result)
+        assert policy_result.allowed is False
+        assert any(v.policy_id == "POL-008" for v in policy_result.violations)
 
 
 # ── RBACManager tests ───────────────────────────────────────────────

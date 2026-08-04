@@ -80,6 +80,7 @@ func (o *ObfuscationDetector) Scan(skillFiles []core.SkillFile, rules []core.Det
 					LineStart:   &lineStart,
 					Snippet:     &snippet,
 					OWASPLLM:    []string{"LLM06"},
+					OWASPAST:    []string{"AST01"},
 					Confidence:  0.75,
 				})
 			}

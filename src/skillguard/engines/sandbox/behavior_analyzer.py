@@ -198,6 +198,7 @@ class BehaviorAnalyzer(ScanEngine):
                         line_start=line_num,
                         snippet=match.group()[:200],
                         owasp_llm=["LLM06"],
+                        owasp_ast=["AST01"],
                         mitre_attack=mitre_ids,
                         confidence=0.80,
                         remediation="Review the script for malicious behavioral patterns.",

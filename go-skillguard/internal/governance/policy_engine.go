@@ -148,8 +148,30 @@ func (pe *PolicyEngine) evaluateCondition(cond Condition, result *core.ScanResul
 		return compareInt(count, cond.Operator, toInt(cond.Value))
 	case "total_findings":
 		return compareInt(result.TotalFindings, cond.Operator, toInt(cond.Value))
+	case "owasp_llm":
+		expected, _ := cond.Value.(string)
+		return containsID(result.OWASPCoverage, cond.Operator, expected)
+	case "owasp_ast":
+		expected, _ := cond.Value.(string)
+		return containsID(result.OWASPASTCoverage, cond.Operator, expected)
 	}
 	return false
+}
+
+// containsID checks whether an OWASP ID is present ("contains"/"eq") or
+// absent ("neq") in a coverage list.
+func containsID(coverage []string, op, expected string) bool {
+	found := false
+	for _, id := range coverage {
+		if strings.EqualFold(id, expected) {
+			found = true
+			break
+		}
+	}
+	if op == "neq" {
+		return !found
+	}
+	return found
 }
 
 func compareString(actual, op, expected string) bool {

@@ -74,6 +74,7 @@ func (t *ToolShadowingDetector) Scan(skillFiles []core.SkillFile, rules []core.D
 					FilePath:    loc.filePath,
 					LineStart:   &lineNum,
 					OWASPLLM:    []string{"LLM07"},
+					OWASPAST:    []string{"AST01"},
 					MITREAttack: []string{"T1557"},
 					Confidence:  0.85,
 					Remediation: &remediation,
@@ -97,6 +98,7 @@ func (t *ToolShadowingDetector) Scan(skillFiles []core.SkillFile, rules []core.D
 					FilePath:    loc.filePath,
 					LineStart:   &lineNum,
 					OWASPLLM:    []string{"LLM07"},
+					OWASPAST:    []string{"AST01"},
 					Confidence:  0.75,
 					Remediation: &remediation,
 				})

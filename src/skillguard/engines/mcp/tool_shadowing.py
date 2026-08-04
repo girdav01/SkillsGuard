@@ -101,6 +101,7 @@ class ToolShadowingDetector(ScanEngine):
                             file_path=file_path,
                             line_start=line_num,
                             owasp_llm=["LLM07"],
+                            owasp_ast=["AST01"],
                             mitre_attack=["T1557"],
                             confidence=0.85,
                             remediation=(
@@ -127,6 +128,7 @@ class ToolShadowingDetector(ScanEngine):
                             file_path=file_path,
                             line_start=line_num,
                             owasp_llm=["LLM07"],
+                            owasp_ast=["AST01"],
                             confidence=0.75,
                             remediation="Remove duplicate tool definitions.",
                         )

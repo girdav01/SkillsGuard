@@ -165,6 +165,12 @@ def print_scan_result(result: ScanResult) -> None:
             f"\n  [bold]OWASP LLM Top 10 Coverage:[/] {', '.join(result.owasp_coverage)}"
         )
 
+    if result.owasp_ast_coverage:
+        console.print(
+            "\n  [bold]OWASP Agentic Skills Top 10 Coverage:[/] "
+            f"{', '.join(result.owasp_ast_coverage)}"
+        )
+
     console.print()
 
 

@@ -107,6 +107,7 @@ class YaraScanner(ScanEngine):
                             file_path=sf.path,
                             snippet=_yara_match_snippet(match, sf.content),
                             owasp_llm=_yara_meta_list(match, "owasp_llm"),
+                            owasp_ast=_yara_meta_list(match, "owasp_ast"),
                             mitre_attack=_yara_meta_list(match, "mitre_attack"),
                             confidence=0.85,
                             remediation=_yara_meta_value(match, "remediation"),

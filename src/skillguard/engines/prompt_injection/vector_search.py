@@ -361,6 +361,7 @@ class VectorSearchEngine(ScanEngine):
                             line_start=line_start,
                             snippet=chunk[:300] + "..." if len(chunk) > 300 else chunk,
                             owasp_llm=["LLM01"],
+                            owasp_ast=["AST01", "AST05"],
                             confidence=round(similarity, 3),
                             remediation=(
                                 "Review flagged content for potential prompt injection. "
@@ -403,6 +404,7 @@ class VectorSearchEngine(ScanEngine):
                         line_start=line_start,
                         snippet=(snippet[:300] + "...") if snippet and len(snippet) > 300 else snippet,
                         owasp_llm=["LLM01"],
+                        owasp_ast=["AST01", "AST05"],
                         confidence=round(similarity * 0.7, 3),  # Lower confidence for fallback
                         remediation=(
                             "Review flagged content for potential prompt injection. "

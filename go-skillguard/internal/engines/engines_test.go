@@ -40,6 +40,8 @@ func TestRegexScannerWithRules(t *testing.T) {
 			Target:   "ANY",
 			Engine:   "REGEX",
 			Pattern:  "eval\\(",
+			OWASPLLM: []string{"LLM01"},
+			OWASPAST: []string{"AST01", "AST05"},
 			Enabled:  true,
 		},
 	}
@@ -54,6 +56,14 @@ func TestRegexScannerWithRules(t *testing.T) {
 	}
 	if len(result.Findings) == 0 {
 		t.Error("Expected findings for eval pattern")
+	} else {
+		f := result.Findings[0]
+		if len(f.OWASPLLM) != 1 || f.OWASPLLM[0] != "LLM01" {
+			t.Errorf("OWASPLLM = %v, want [LLM01]", f.OWASPLLM)
+		}
+		if len(f.OWASPAST) != 2 || f.OWASPAST[0] != "AST01" || f.OWASPAST[1] != "AST05" {
+			t.Errorf("OWASPAST = %v, want [AST01 AST05]", f.OWASPAST)
+		}
 	}
 	if result.Verdict == core.EngineVerdictClean {
 		t.Error("Verdict should not be clean")

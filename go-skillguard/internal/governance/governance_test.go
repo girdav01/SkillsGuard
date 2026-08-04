@@ -87,6 +87,42 @@ func TestPolicyEngineCleanResult(t *testing.T) {
 	}
 }
 
+func TestPolicyEngineOWASPASTCondition(t *testing.T) {
+	pe := NewPolicyEngine()
+	pe.AddPolicy(Policy{
+		ID:          "ast-001",
+		Name:        "Block Prompt Injection Skills",
+		Description: "Block skills with OWASP AST05 findings",
+		Conditions:  []Condition{{Field: "owasp_ast", Operator: "contains", Value: "AST05"}},
+		Action:      PolicyActionBlock,
+		Enabled:     true,
+	})
+
+	result := &core.ScanResult{
+		Verdict:          core.VerdictSuspicious,
+		CompositeScore:   45,
+		OWASPASTCoverage: []string{"AST01", "AST05"},
+	}
+
+	matched := false
+	for _, r := range pe.Evaluate(result) {
+		if r.PolicyID == "ast-001" && r.Matched {
+			matched = true
+		}
+	}
+	if !matched {
+		t.Error("owasp_ast condition should match AST05 in coverage")
+	}
+
+	// Without AST05, the policy must not match.
+	result.OWASPASTCoverage = []string{"AST02"}
+	for _, r := range pe.Evaluate(result) {
+		if r.PolicyID == "ast-001" && r.Matched {
+			t.Error("owasp_ast condition should not match without AST05")
+		}
+	}
+}
+
 func TestRBACManager(t *testing.T) {
 	rbac := NewRBACManager()
 

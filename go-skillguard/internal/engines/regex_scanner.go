@@ -11,9 +11,9 @@ import (
 
 // nlTargets are file types scanned for natural-language injection.
 var nlTargets = map[core.FileType]bool{
-	core.FileTypeSkillMD:      true,
-	core.FileTypeFrontmatter:  true,
-	core.FileTypeTemplate:     true,
+	core.FileTypeSkillMD:     true,
+	core.FileTypeFrontmatter: true,
+	core.FileTypeTemplate:    true,
 }
 
 // scriptTargets are script file types.
@@ -167,6 +167,7 @@ func applyRule(rule core.DetectionRule, sf core.SkillFile) []core.Finding {
 				LineEnd:     &lineEnd,
 				Snippet:     &snippet,
 				OWASPLLM:    rule.OWASPLLM,
+				OWASPAST:    rule.OWASPAST,
 				MITREAttack: rule.MITREAttack,
 				Confidence:  conf,
 				Remediation: strPtr(rule.Remediation),

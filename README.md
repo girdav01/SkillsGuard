@@ -1,7 +1,7 @@
 # SkillGuard
 
-**Multi-engine security scanner for AI skills, MCP servers, and agentic tool definitions.s**
-SkillGuard scans AI agent skill packages with 12 parallel engines to detect prompt injection, credential theft, code execution, data exfiltration, obfuscation, and MCP-specific attacks. It produces risk-scored verdicts, CycloneDX SBOMs, and maps findings to OWASP LLM Top 10 and MITRE ATT&CK frameworks.
+**Multi-engine security scanner for AI skills, MCP servers, and agentic tool definitions.**
+SkillGuard scans AI agent skill packages with 12 parallel engines to detect prompt injection, credential theft, code execution, data exfiltration, obfuscation, and MCP-specific attacks. It produces risk-scored verdicts, CycloneDX SBOMs, and maps findings to the [OWASP Agentic Skills Top 10](https://owasp.org/www-project-agentic-skills-top-10/), OWASP LLM Top 10, and MITRE ATT&CK frameworks. See [docs/OWASP_AST10_COVERAGE.md](docs/OWASP_AST10_COVERAGE.md) for the full AST10 coverage matrix and roadmap.
 
 ![App screenshot](./IMG_2044.png)
 ---
@@ -73,7 +73,8 @@ $ skillguard scan ./my-skill
     [MEDIUM]    SG-OB-001  Base64 Encoded Payloads         payload.py:23
 
   Engines: 12/12 completed (47ms)
-  OWASP Coverage: LLM01, LLM06
+  OWASP LLM Top 10 Coverage: LLM01, LLM06
+  OWASP Agentic Skills Top 10 Coverage: AST01, AST03, AST05
 ```
 
 ---
@@ -327,7 +328,7 @@ skillguard rules --list --category mcp_specific
 Output:
 
 ```
-Loaded 87 rules:
+Loaded 115 rules:
 
   [CRITICAL]  SG-PI-001       Instruction Override Pattern
   [CRITICAL]  SG-PI-002       Role Hijacking Pattern
@@ -366,7 +367,7 @@ SkillGuard runs **12 engines in parallel** on every scan:
 
 | # | Engine | What it Detects |
 |---|--------|-----------------|
-| 1 | **Regex Scanner** | Pattern-matched prompt injection, credential theft, code execution from 87 YAML rules |
+| 1 | **Regex Scanner** | Pattern-matched prompt injection, credential theft, code execution from 115 YAML rules |
 | 2 | **YARA Scanner** | Complex multi-pattern malware signatures via YARA rules |
 | 3 | **Secret Detector** | 24+ types of hardcoded secrets (AWS keys, API tokens, private keys, DB connection strings) |
 | 4 | **ML Classifier** | Prompt injection in natural language via DeBERTa v3 ONNX model (heuristic fallback) |
@@ -385,7 +386,7 @@ Every engine produces typed `Finding` objects with severity, confidence, OWASP L
 
 ## Detection Rules
 
-**87 YAML-based detection rules** across 7 categories:
+**115 YAML-based detection rules** across 12 categories:
 
 | Category | Rules | IDs | Severity |
 |----------|-------|-----|----------|
@@ -395,6 +396,12 @@ Every engine produces typed `Finding` objects with severity, confidence, OWASP L
 | Data Exfiltration | 10 | SG-DE-001 - SG-DE-010 | CRITICAL, HIGH |
 | Obfuscation | 10 | SG-OB-001 - SG-OB-010 | CRITICAL, HIGH, MEDIUM |
 | MCP-Specific | 12 | SG-MCP-001 - SG-MCP-012 | CRITICAL, HIGH, MEDIUM |
+| Supply Chain | 5 | SG-SC-001 - SG-SC-005 | HIGH, MEDIUM |
+| Metadata | 5 | SG-MD-001 - SG-MD-005 | HIGH, MEDIUM, LOW |
+| Isolation | 5 | SG-IS-001 - SG-IS-005 | CRITICAL, HIGH |
+| Deserialization | 5 | SG-DS-001 - SG-DS-005 | CRITICAL, HIGH |
+| Cross-Platform | 5 | SG-XP-001 - SG-XP-005 | HIGH, MEDIUM |
+| Update Drift | 3 | SG-UD-001 - SG-UD-003 | HIGH, MEDIUM |
 
 Each rule includes:
 
@@ -405,6 +412,7 @@ description: Detects patterns that attempt to override agent system instructions
 severity: critical
 category: prompt_injection
 owasp_llm: [LLM01]
+owasp_ast: [AST01, AST05]
 mitre_attack: [T1059.006]
 target: SKILL_MD
 engine: REGEX
@@ -684,7 +692,7 @@ skillguard bom ./my-skill -o sbom.json
 
 Evaluate scan results against configurable organizational policies with block/warn/audit actions.
 
-**6 built-in default policies:**
+**8 built-in default policies:**
 
 | ID | Name | Action | Condition |
 |----|------|--------|-----------|
@@ -694,6 +702,20 @@ Evaluate scan results against configurable organizational policies with block/wa
 | POL-004 | Warn on Suspicious | warn | verdict = suspicious |
 | POL-005 | Block High Score | block | score >= 80 |
 | POL-006 | Require OWASP Coverage | warn | OWASP LLM01 detected |
+| POL-007 | Require Skill Inventory Registration | warn | skill not registered in inventory |
+| POL-008 | Require Approval for High-Privilege Skills | block | OWASP AST03 detected and not approved |
+
+Policies can also gate on OWASP Agentic Skills Top 10 IDs with the `owasp_ast_detected`
+condition (`owasp_detected` matches both LLM and AST IDs):
+
+```yaml
+policies:
+  - id: ORG-AST05
+    name: Block Prompt Injection Skills
+    action: block
+    conditions:
+      owasp_ast_detected: AST05
+```
 
 **Custom policies via YAML:**
 

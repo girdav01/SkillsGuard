@@ -284,6 +284,7 @@ class ToolPoisoningDetector(ScanEngine):
                         line_start=line_start,
                         snippet=snippet,
                         owasp_llm=["LLM01", "LLM07"],
+                        owasp_ast=["AST01", "AST05"],
                         mitre_attack=["T1195.002"],
                         confidence=0.85,
                         remediation=(
@@ -317,6 +318,7 @@ class ToolPoisoningDetector(ScanEngine):
                         line_start=line_start,
                         snippet=snippet,
                         owasp_llm=["LLM07"],
+                        owasp_ast=["AST02"],
                         mitre_attack=["T1195.002"],
                         confidence=0.80,
                         remediation=(

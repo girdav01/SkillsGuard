@@ -180,6 +180,7 @@ class SandboxExecutor(ScanEngine):
                         line_start=line_num,
                         snippet=match.group()[:200],
                         owasp_llm=["LLM06"],
+                        owasp_ast=["AST01"],
                         mitre_attack=["T1059"],
                         confidence=0.80,
                         remediation="Review the script for malicious intent.",
@@ -278,6 +279,7 @@ class SandboxExecutor(ScanEngine):
                     description="Script execution timed out, suggesting possible infinite loop or resource exhaustion.",
                     file_path=sf.path,
                     owasp_llm=["LLM06"],
+                    owasp_ast=["AST01"],
                     confidence=0.70,
                     remediation="Investigate the script for infinite loops or resource-intensive operations.",
                 )
@@ -297,6 +299,7 @@ class SandboxExecutor(ScanEngine):
                         file_path=sf.path,
                         snippet=combined_output[:300] + "..." if len(combined_output) > 300 else combined_output,
                         owasp_llm=["LLM06"],
+                        owasp_ast=["AST01"],
                         mitre_attack=["T1059"],
                         confidence=0.75,
                         remediation="Review script output for potential security issues.",
@@ -318,6 +321,7 @@ class SandboxExecutor(ScanEngine):
                             file_path=sf.path,
                             snippet=exec_result.stderr[:300],
                             owasp_llm=["LLM06"],
+                            owasp_ast=["AST01"],
                             confidence=0.80,
                             remediation="Review the script for unauthorized access attempts.",
                         )
@@ -333,6 +337,7 @@ class SandboxExecutor(ScanEngine):
                     description=behavior,
                     file_path=sf.path,
                     owasp_llm=["LLM06"],
+                    owasp_ast=["AST01"],
                     confidence=0.65,
                 )
             )

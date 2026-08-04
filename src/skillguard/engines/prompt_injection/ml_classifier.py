@@ -183,6 +183,7 @@ class MLClassifier(ScanEngine):
                         line_start=line_start,
                         snippet=chunk[:300] + "..." if len(chunk) > 300 else chunk,
                         owasp_llm=["LLM01"],
+                        owasp_ast=["AST01", "AST05"],
                         mitre_attack=["T1059.006"],
                         confidence=round(score, 3),
                         remediation=(
@@ -262,6 +263,7 @@ class MLClassifier(ScanEngine):
                         line_start=line_start,
                         snippet=chunk[:300] + "..." if len(chunk) > 300 else chunk,
                         owasp_llm=["LLM01"],
+                        owasp_ast=["AST01", "AST05"],
                         mitre_attack=["T1059.006"],
                         confidence=round(score, 3),
                         remediation=(

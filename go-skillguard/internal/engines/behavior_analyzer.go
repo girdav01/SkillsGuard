@@ -16,6 +16,7 @@ type behaviorPattern struct {
 	Category    string
 	Description string
 	OWASPLLM    []string
+	OWASPAST    []string
 	MITREAttack []string
 }
 
@@ -87,6 +88,7 @@ func init() {
 			Category:    rb.category,
 			Description: rb.desc,
 			OWASPLLM:    rb.owasp,
+			OWASPAST:    []string{"AST01"},
 			MITREAttack: rb.mitre,
 		}
 		for _, p := range rb.patterns {
@@ -147,6 +149,7 @@ func (b *BehaviorAnalyzer) Scan(skillFiles []core.SkillFile, rules []core.Detect
 						LineStart:   &lineStart,
 						Snippet:     &snippet,
 						OWASPLLM:    bp.OWASPLLM,
+						OWASPAST:    bp.OWASPAST,
 						MITREAttack: bp.MITREAttack,
 						Confidence:  0.80,
 					})

@@ -202,6 +202,7 @@ class SecretDetector(ScanEngine):
                             snippet=_redact_line(snippet_line),
                             cwe="CWE-798",
                             owasp_llm=["LLM06"],
+                            owasp_ast=["AST01", "AST03"],
                             confidence=0.75,
                             remediation="Remove hardcoded secrets and use environment "
                             "variables or a secret manager instead.",

@@ -108,6 +108,7 @@ func (s *SecretDetector) Scan(skillFiles []core.SkillFile, rules []core.Detectio
 					Snippet:     &snippetLine,
 					CWE:         &cwe,
 					OWASPLLM:    []string{"LLM06"},
+					OWASPAST:    []string{"AST01", "AST03"},
 					Confidence:  0.75,
 					Remediation: &remediation,
 				})

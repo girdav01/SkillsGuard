@@ -112,9 +112,9 @@ class PolicyEngine:
             PolicyRule(
                 id="POL-008",
                 name="Require Approval for High-Privilege Skills",
-                description="Block high-privilege skills that have not been approved",
+                description="Block high-privilege (OWASP AST03) skills that have not been approved",
                 action="block",
-                conditions={"approval_required": True, "approved_by": ""},
+                conditions={"approval_required": True},
             ),
         ]
 
@@ -205,11 +205,17 @@ class PolicyEngine:
             if count >= conditions["min_count"]:
                 return f"{count} {sev} findings (threshold: {conditions['min_count']})"
 
-        # Check OWASP detection
+        # Check OWASP detection (matches LLM Top 10 and Agentic Skills Top 10 IDs)
         if "owasp_detected" in conditions:
             owasp_id = conditions["owasp_detected"]
-            if owasp_id in result.owasp_coverage:
+            if owasp_id in result.owasp_coverage or owasp_id in result.owasp_ast_coverage:
                 return f"OWASP {owasp_id} detected"
+
+        # Check OWASP Agentic Skills Top 10 detection
+        if "owasp_ast_detected" in conditions:
+            ast_id = conditions["owasp_ast_detected"]
+            if ast_id in result.owasp_ast_coverage:
+                return f"OWASP AST {ast_id} detected"
 
         # Check inventory registration
         if "inventory_registered" in conditions:
@@ -218,11 +224,17 @@ class PolicyEngine:
                 if not registered:
                     return "Skill is not registered in the inventory"
 
-        # Check approval for high-privilege skills
+        # Check approval for high-privilege skills. A skill is considered
+        # high-privilege when findings map to OWASP AST03 (over-privileged
+        # access); clean skills do not require approval.
         if "approval_required" in conditions and conditions["approval_required"]:
             approved_by = getattr(result, "approved_by", None)
-            if not approved_by:
-                return "High-privilege skill requires approval but has not been approved"
+            high_privilege = "AST03" in result.owasp_ast_coverage
+            if high_privilege and not approved_by:
+                return (
+                    "High-privilege skill (OWASP AST03) requires approval "
+                    "but has not been approved"
+                )
 
         return ""
 

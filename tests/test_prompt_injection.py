@@ -28,6 +28,7 @@ def instruction_override_rule() -> DetectionRule:
         severity=Severity.CRITICAL,
         category="prompt_injection",
         owasp_llm=["LLM01"],
+        owasp_ast=["AST01", "AST05"],
         target="SKILL_MD",
         engine="REGEX",
         pattern={
@@ -70,6 +71,8 @@ class TestRegexScanner:
         assert result.verdict == EngineVerdict.MALICIOUS
         assert len(result.findings) >= 1
         assert result.findings[0].rule_id == "SG-PI-001"
+        assert result.findings[0].owasp_llm == ["LLM01"]
+        assert result.findings[0].owasp_ast == ["AST01", "AST05"]
 
     @pytest.mark.asyncio
     async def test_detects_disregard_guidelines(
